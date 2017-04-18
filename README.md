@@ -21,6 +21,8 @@ You should approach the write-up like a research paper. It should contain the fo
 
 The write-up should be a <b>minimum</b> of two pages using the IEEE VIS Poster Format: http://junctionpublishing.org/vgtc/Tasks/camera.html
 
+As with Project 1, please email me a confidential post-mortem that outlines your roles, how you'd rate your own contribution, and how you'd rate the contributions of your teammates. 
+
 <h2>Submission</h2>
 Final projects are due 11:59pm on 5.5; however, you will have a no-cost extension until 5.8 at 11:59pm. Note that due to University grading deadlines, late projects will not be accepted.    
 
