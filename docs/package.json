@@ -1,0 +1,21 @@
+{
+  "name": "tweetsonamap.com",
+  "scripts": {
+    "start": "budo js/index.js --serve=js/bundle.js --live -d",
+    "build": "browserify js/index.js | uglifyjs -c -m > js/bundle.js"
+  },
+  "devDependencies": {
+    "browserify": "^13.1.0",
+    "budo": "^9.2.1",
+    "uglify-js": "^2.7.3"
+  },
+  "dependencies": {
+    "animateplus": "^1.4.0",
+    "jquery": "^3.1.1",
+    "mapbox-gl": "^0.25.1",
+    "mapbox-gl-geocoder": "^1.3.1",
+    "tilebelt": "^1.0.1",
+    "turf":"^3.0.11",
+    "d3":"^4.2.8"
+  }
+}
