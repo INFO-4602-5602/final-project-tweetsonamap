@@ -63,14 +63,18 @@ map.on('load', function () {
   Image rendering logic, careful, this gets called a lot :)
 */
 
+var z = 100;
 
 var popups = []
 function addPopUps(uniqueFeatures){
+
   uniqueFeatures.forEach(function(feature){
+    z++;
     var img = document.createElement('img');
       img.src = `${imageHandler.img_dir}/${feature.properties.id}${imageHandler.extension}`
       img.height = 50
       img.width  = 50
+      img.style  = "z-index:"+z+";"
     // var el = `<img width="100" height="100" src="${imageHandler.img_dir}/${feature.properties.id}${imageHandler.extension}"/>`
     popups.push(new mapboxgl.Marker(img)
       .setLngLat(feature.geometry.coordinates)
