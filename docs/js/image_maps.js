@@ -31,11 +31,11 @@ module.exports = function(config){
     //TODO: overhaul this logic, make it scale appropriately with the projection,
     //and more zoom levels?
     var zoomScales = {
-      0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 0.1, 6: 0.07, 7: 0.06,
+      0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 0.1, 6: 0.5, 7: 0.06,
       8: 0.05, 9: 0.04, 10: 0.03, 11: 0.02, 12: 0.01,
       13: 0.008, 14: 0.003, 15: 0.001, 16: 0.0008, 17: 0.0003,  18: 0.0001,  19: 0.00003
     }
-    var scale = zoomScales[zoom]
+    var scale = 1 //zoomScales[zoom]
 
     //ul,ur,lr,ll
     return [

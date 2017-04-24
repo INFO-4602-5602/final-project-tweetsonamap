@@ -11,8 +11,8 @@ var imageHandler = new ImageHandler({
   img_height: 150,
   img_width:  150,
   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta10000.geojson',
-  load_lim:   200,
+  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
+  load_lim:   100,
   extension:  ".jpg"
 })
 
