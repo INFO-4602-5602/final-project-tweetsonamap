@@ -1,7 +1,5 @@
 'use strict';
 
-console.log("HI")
-
 window.mapboxgl = require('mapbox-gl');
 
 var util = require('../lib/functions.js')
