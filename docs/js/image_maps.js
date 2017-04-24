@@ -35,7 +35,7 @@ module.exports = function(config){
       8: 0.05, 9: 0.04, 10: 0.03, 11: 0.02, 12: 0.01,
       13: 0.008, 14: 0.003, 15: 0.001, 16: 0.0008, 17: 0.0003,  18: 0.0001,  19: 0.00003
     }
-    var scale = 1 //zoomScales[zoom]
+    var scale = zoomScales[zoom]
 
     //ul,ur,lr,ll
     return [

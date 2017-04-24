@@ -5,7 +5,8 @@ console.log("HI")
 window.mapboxgl = require('mapbox-gl');
 
 var util = require('../lib/functions.js')
-var ImageHandler  = require('./image_maps.js')
+var ImageHandler   = require('./image_maps.js')
+var MarkerHandler  = require('./image_markers.js')
 
 var imageHandler = new ImageHandler({
   img_height: 150,
@@ -13,6 +14,15 @@ var imageHandler = new ImageHandler({
   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
   geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
   load_lim:   100,
+  extension:  ".jpg"
+})
+
+var markerHandler = new MarkerHandler({
+  img_height: 150,
+  img_width:  150,
+  img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
+  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
+  load_lim:   200,
   extension:  ".jpg"
 })
 
@@ -41,7 +51,6 @@ map.on('load', function () {
     "source": 'tweets'
   });
 
-
   // The worker
   map.on('moveend',function(){
     var features = map.queryRenderedFeatures({layers: ['tweets-layer']})
@@ -53,7 +62,8 @@ map.on('load', function () {
     console.log(uniqueFeatures.length)
 
     //renderImages(uniqueFeatures)
-    addPopUps(uniqueFeatures)
+
+    addMarkers(uniqueFeatures)
   })
 
 });
@@ -62,23 +72,23 @@ map.on('load', function () {
 /*
   Image rendering logic, careful, this gets called a lot :)
 */
-
-var z = 100;
-
-var popups = []
-function addPopUps(uniqueFeatures){
+function addMarkers(uniqueFeatures){
 
   uniqueFeatures.forEach(function(feature){
-    z++;
-    var img = document.createElement('img');
-      img.src = `${imageHandler.img_dir}/${feature.properties.id}${imageHandler.extension}`
-      img.height = 50
-      img.width  = 50
-      img.style  = "z-index:"+z+";"
-    // var el = `<img width="100" height="100" src="${imageHandler.img_dir}/${feature.properties.id}${imageHandler.extension}"/>`
-    popups.push(new mapboxgl.Marker(img)
-      .setLngLat(feature.geometry.coordinates)
-      .addTo(map));
+
+    // zoom = Math.floor(map.getZoom()) //This should function at 0.5 levels too
+    // if(zoom!=prevZoom){
+    //   resize = true;
+    //   prevZoom = zoom;
+    // }
+
+    if (markerHandler.activeMarkers.hasOwnProperty(feature.properties.id)){
+      console.log("marker exists")
+      //marker exists... do something about it?
+    }else{
+      console.log('making marker')
+      markerHandler.buildMarker(feature, zoom).addTo(map)
+    }
   })
 }
 
