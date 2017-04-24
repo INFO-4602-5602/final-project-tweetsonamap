@@ -37,7 +37,6 @@ var map = new mapboxgl.Map({
     hash:true
 });
 
-
 map.on('load', function () {
 
   map.addSource('tweets',{
@@ -62,12 +61,9 @@ map.on('load', function () {
     console.log(uniqueFeatures.length)
 
     //renderImages(uniqueFeatures)
-
     addMarkers(uniqueFeatures)
   })
-
 });
-
 
 /*
   Image rendering logic, careful, this gets called a lot :)
