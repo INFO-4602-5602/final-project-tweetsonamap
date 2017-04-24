@@ -15,5 +15,22 @@ module.exports = {
       });
 
       return uniqueFeatures;
+  },
+
+  getUniqueGeometries: function(array) {
+      var existingFeatureKeys = {};
+      // Because features come from tiled vector data, feature geometries may be split
+      // or duplicated across tile boundaries and, as a result, features may appear
+      // multiple times in query results.
+      var uniqueFeatures = array.filter(function(el) {
+          if (existingFeatureKeys[el.geometry.coordinates.join(",")]) {
+              return false;
+          } else {
+              existingFeatureKeys[el.geometry.coordinates.join(",")] = true;
+              return true;
+          }
+      });
+
+      return uniqueFeatures;
   }
 }
