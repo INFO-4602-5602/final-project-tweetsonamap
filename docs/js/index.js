@@ -52,7 +52,8 @@ map.on('load', function () {
 
     console.log(uniqueFeatures.length)
 
-    renderImages(uniqueFeatures)
+    //renderImages(uniqueFeatures)
+    addPopUps(uniqueFeatures)
   })
 
 });
@@ -61,6 +62,21 @@ map.on('load', function () {
 /*
   Image rendering logic, careful, this gets called a lot :)
 */
+
+
+var popups = []
+function addPopUps(uniqueFeatures){
+  uniqueFeatures.forEach(function(feature){
+    var img = document.createElement('img');
+      img.src = `${imageHandler.img_dir}/${feature.properties.id}${imageHandler.extension}`
+      img.height = 50
+      img.width  = 50
+    // var el = `<img width="100" height="100" src="${imageHandler.img_dir}/${feature.properties.id}${imageHandler.extension}"/>`
+    popups.push(new mapboxgl.Marker(img)
+      .setLngLat(feature.geometry.coordinates)
+      .addTo(map));
+  })
+}
 
 var resize, newImages, zoom, prevZoom;
 var prevFeatures = new Set();
