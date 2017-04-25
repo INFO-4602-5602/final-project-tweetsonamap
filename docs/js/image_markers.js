@@ -1,3 +1,6 @@
+var popup = new mapboxgl.Popup({
+
+})
 module.exports = function(config){
 
   this.img_height = config.img_height
@@ -8,31 +11,50 @@ module.exports = function(config){
   this.load_lim   = config.load_lim
 
   this.activeMarkers = {}
-  this.zoomLevel = 100
-
 
   //https://www.mapbox.com/mapbox-gl-js/example/custom-marker-icons/
-  this.buildMarker = function(feature, zoom){
+  this.buildMarker = function(feature, zoom, map){
 
     //Scale logic could go here
-    h = this.img_height
-    w = this.img_width
+    //h = this.img_height
+    //w = this.img_width
+
+    var that = this
 
     var markerDiv  = document.createElement('div')
         markerDiv.className = 'marker';
         markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/${feature.properties.id}${this.extension}` + ')';
-        markerDiv.style.width = 100+'px';
-        markerDiv.style.height = 100+'px';
+        markerDiv.style.width  = this.img_width+'px';
+        markerDiv.style.height = this.img_height+'px';
 
-        // markerDiv.addEventListener('click', function() {
-        //   window.alert(JSON.stringify(feature.properties)+"\n"+JSON.stringify(feature.geometry));
-        // });
+        markerDiv.addEventListener('mouseenter', function() {
+            popup.setLngLat(feature.geometry.coordinates)
+                 .setHTML(that.prettyPopUp(feature.properties))
+                 .addTo(map)
+
+        });
+
+        markerDiv.addEventListener('mouseleave', function() {
+          popup.remove();
+        });
 
     var marker = new mapboxgl.Marker(markerDiv, {offset: [-50,-50]})
       .setLngLat(feature.geometry.coordinates)
+      .addTo(map)
 
-    this.activeMarkers[feature.properties.id]   = marker
+    this.activeMarkers[feature.properties.id] = marker
 
     return marker
+  }
+
+  this.resize = function(id){
+    this.activeMarkers[id]._element.style.width = this.img_width+'px'
+    this.activeMarkers[id]._element.style.height = this.img_width+'px'
+  }
+
+  this.prettyPopUp = function(properties){
+    var htmlString = ''
+    htmlString += JSON.stringify(properties)
+    return htmlString
   }
 }

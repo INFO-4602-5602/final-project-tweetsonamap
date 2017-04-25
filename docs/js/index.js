@@ -1,28 +1,25 @@
 'use strict';
 
-console.log("HI")
-
-window.mapboxgl = require('mapbox-gl');
-
-var util = require('../lib/functions.js')
+var util           = require('../lib/functions.js')
 var ImageHandler   = require('./image_maps.js')
 var MarkerHandler  = require('./image_markers.js')
 
-var imageHandler = new ImageHandler({
-  img_height: 150,
-  img_width:  150,
-  img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
-  load_lim:   100,
-  extension:  ".jpg"
-})
+//Deprecated, but leaving here for posterity
+// var imageHandler = new ImageHandler({
+//   img_height: 150,
+//   img_width:  150,
+//   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
+//   geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
+//   load_lim:   100,
+//   extension:  ".jpg"
+// })
 
 var markerHandler = new MarkerHandler({
   img_height: 150,
   img_width:  150,
   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
-  load_lim:   200,
+  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta10000.geojson',
+  load_lim:   100,
   extension:  ".jpg"
 })
 
@@ -37,60 +34,65 @@ var map = new mapboxgl.Map({
     hash:true
 });
 
-map.on('load', function () {
-
-  map.addSource('tweets',{
-    "type": "geojson",
-    "data": imageHandler.geojson
-  })
-
-  map.addLayer({
-    "id": "tweets-layer",
-    "type": "circle",
-    "source": 'tweets'
-  });
-
-  // The worker
-  map.on('moveend',function(){
-    var features = map.queryRenderedFeatures({layers: ['tweets-layer']})
-    if (!features.length) return //If no features exist here, return
-
-    //Since we have vector tiles, need to only handle unique features
-    var uniqueFeatures = util.getUniqueGeometries(features).slice(0,imageHandler.load_lim); //Only ever take the load limit
-
-    console.log(uniqueFeatures.length)
-
-    //renderImages(uniqueFeatures)
-    addMarkers(uniqueFeatures)
-  })
-});
-
 /*
   Image rendering logic, careful, this gets called a lot :)
 */
-function addMarkers(uniqueFeatures){
+var resize, newImages, zoom, prevZoom;
+var prevFeatures = new Set();
+function renderMarkers(uniqueFeatures){
+
+  var features = map.queryRenderedFeatures({layers: ['tweets-layer']})
+  if (!features.length) return //If no features exist here, return
+
+  //Since we have vector tiles, need to only handle unique features
+  var uniqueFeatures = util.getUniqueGeometries(features).slice(0,markerHandler.load_lim); //Only ever take the load limit
+
+  //If markers go away, they need to be removed.
+  var theseFeatures = new Set();
 
   uniqueFeatures.forEach(function(feature){
 
-    // zoom = Math.floor(map.getZoom()) //This should function at 0.5 levels too
-    // if(zoom!=prevZoom){
-    //   resize = true;
-    //   prevZoom = zoom;
-    // }
+    zoom = Math.floor(map.getZoom()) //This should function at 0.5 levels too
+    if(zoom!=prevZoom){
+      resize = true;
+      prevZoom = zoom;
+    }
 
     if (markerHandler.activeMarkers.hasOwnProperty(feature.properties.id)){
-      console.log("marker exists")
       //marker exists... do something about it?
+      theseFeatures.add(feature.properties.id)
+      if (resize) {
+        markerHandler.resize(feature.properties.id);
+      }
+      theseFeatures.add(feature.properties.id)
     }else{
-      console.log('making marker')
-      markerHandler.buildMarker(feature, zoom).addTo(map)
+      markerHandler.buildMarker(feature, zoom, map)
+
+      //Save it here
+      theseFeatures.add(feature.properties.id)
     }
   })
+  if(prevFeatures.size > 0){ //If there is a previous set
+    var difference = new Set([...prevFeatures].filter(x => !theseFeatures.has(x)));
+
+    difference.forEach(function(id) {
+      markerHandler.activeMarkers[id].remove()
+      delete markerHandler.activeMarkers[id];
+    });
+  }
+  prevFeatures = new Set(theseFeatures)
 }
 
-var resize, newImages, zoom, prevZoom;
-var prevFeatures = new Set();
+document.getElementById('image_size').addEventListener('change',function(e){
+  markerHandler.img_width = e.target.value;
+  markerHandler.img_height = e.target.value;
+  resize = true;
+  renderMarkers();
+})
 
+//Deprecated
+/*var resize, newImages, zoom, prevZoom;
+var prevFeatures = new Set();
 function renderImages(uniqueFeatures){
   resize = false
 
@@ -162,14 +164,34 @@ function renderImages(uniqueFeatures){
   }
   prevFeatures = new Set(theseFeatures)
 }
+*/
 
+map.on('load', function () {
 
-map.once('load',function(){
-  var features = map.queryRenderedFeatures({layers: ['tweets-layer']})
-  if (!features.length) return //If no features exist here, return
+  map.addSource('tweets',{
+    "type": "geojson",
+    "data": markerHandler.geojson
+  })
 
-  //Since we have vector tiles, need to only handle unique features
-  var uniqueFeatures = util.getUniqueGeometries(features).slice(0,imageHandler.load_lim); //Only ever take the load limit
+  map.addLayer({
+    "id": "tweets-layer",
+    "type": "circle",
+    "source": 'tweets'
+  });
 
-  renderImages(uniqueFeatures)
-})
+  // The worker
+  map.on('moveend',function(){
+    renderMarkers()
+  })
+
+});
+
+var initialRender = setInterval(function(){
+  if(map.loaded()){
+    renderMarkers()
+    clearInterval(initialRender)
+    console.log("Rendering")
+  }else{
+    console.log("Waiting on map...")
+  }
+},1000)
