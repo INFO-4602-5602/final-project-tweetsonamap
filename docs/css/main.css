@@ -1,0 +1,27 @@
+body { margin:0 auto; padding:0;}
+#map { height:80%; width:100%; }
+.marker {
+  display: block;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
+#images{
+  width: 98%;
+  height: 20%;
+  min-height:150px;
+  display: block;
+  white-space: nowrap;
+  overflow-x: scroll;
+  overflow-y: hidden;
+}
+
+.visible-image{
+  width:10%;
+  min-width:150px;
+  min-height:150;
+  display:inline-block;
+  border: 1px solid black;
+}

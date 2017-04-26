@@ -57,9 +57,10 @@ module.exports = function(config){
 }
 
 },{}],2:[function(require,module,exports){
-var popup = new mapboxgl.Popup({
+var util = require("../lib/functions.js")
 
-})
+var popup = new mapboxgl.Popup()
+
 module.exports = function(config){
 
   this.img_height = config.img_height
@@ -68,6 +69,7 @@ module.exports = function(config){
   this.extension  = config.extension
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
+  this.on         = true;
 
   this.activeMarkers = {}
 
@@ -106,6 +108,84 @@ module.exports = function(config){
     return marker
   }
 
+  this.remove = function(map){
+    if(this.on){
+      this.on = false;
+      var that = this;
+      Object.keys(that.activeMarkers).forEach(function(id){
+        that.activeMarkers[id].remove()
+        delete that.activeMarkers[id];
+      })
+      map.removeLayer('marker-layer')
+    }
+  }
+
+  this.addMarkerLayer = function(map){
+    this.on = true
+    map.addLayer({
+      "id": "marker-layer",
+      "type": "circle",
+      "source": 'tweets'
+    });
+    var that = this;
+    var initialRender = setInterval(function(){
+      if(map.loaded()){
+        that.renderMarkers(map)
+        clearInterval(initialRender)
+        console.log("Rendering")
+      }else{
+        console.log("Waiting on map...")
+      }
+    },1000)
+  }
+
+  var resize, newImages, prevZoom, zoom;
+  var prevFeatures = new Set();
+
+  this.renderMarkers = function(map){
+    var features = map.queryRenderedFeatures({layers: ['marker-layer']})
+    if (!features.length) return //If no features exist here, return
+
+    //Since we have vector tiles, need to only handle unique features
+    var uniqueFeatures = util.getUniqueGeometries(features).slice(0,this.load_lim); //Only ever take the load limit
+
+    //If markers go away, they need to be removed.
+    var theseFeatures = new Set();
+
+    zoom = Math.floor(map.getZoom()) //This should function at 0.5 levels too
+    if(zoom!=prevZoom){
+      resize = true;
+      prevZoom = zoom;
+    }
+
+    var that = this;
+
+    uniqueFeatures.forEach(function(feature){
+      if (that.activeMarkers.hasOwnProperty(feature.properties.id)){
+        //marker exists... do something about it?
+        theseFeatures.add(feature.properties.id)
+        if (resize) {
+          that.resize(feature.properties.id);
+        }
+        theseFeatures.add(feature.properties.id)
+      }else{
+        that.buildMarker(feature, zoom, map)
+
+        //Save it here
+        theseFeatures.add(feature.properties.id)
+      }
+    })
+    if(prevFeatures.size > 0){ //If there is a previous set
+      var difference = new Set([...prevFeatures].filter(x => !theseFeatures.has(x)));
+
+      difference.forEach(function(id) {
+        that.activeMarkers[id].remove()
+        delete that.activeMarkers[id];
+      });
+    }
+    prevFeatures = new Set(theseFeatures)
+  }
+
   this.resize = function(id){
     this.activeMarkers[id]._element.style.width = this.img_width+'px'
     this.activeMarkers[id]._element.style.height = this.img_width+'px'
@@ -118,28 +198,28 @@ module.exports = function(config){
   }
 }
 
-},{}],3:[function(require,module,exports){
+},{"../lib/functions.js":5}],3:[function(require,module,exports){
 'use strict';
 
 var util           = require('../lib/functions.js')
 var ImageHandler   = require('./image_maps.js')
 var MarkerHandler  = require('./image_markers.js')
-
-//Deprecated, but leaving here for posterity
-// var imageHandler = new ImageHandler({
-//   img_height: 150,
-//   img_width:  150,
-//   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
-//   geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta1000.geojson',
-//   load_lim:   100,
-//   extension:  ".jpg"
-// })
+var PolygonHandler = require('./polygon_layers.js')
 
 var markerHandler = new MarkerHandler({
+  img_height: 100,
+  img_width:  100,
+  img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
+  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta10000.geojson',
+  load_lim:   100,
+  extension:  ".jpg"
+})
+
+var polygonHandler = new PolygonHandler({
   img_height: 150,
   img_width:  150,
   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta10000.geojson',
+  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/poly-full.geojson',
   load_lim:   100,
   extension:  ".jpg"
 })
@@ -155,55 +235,6 @@ var map = new mapboxgl.Map({
     hash:true
 });
 
-/*
-  Image rendering logic, careful, this gets called a lot :)
-*/
-var resize, newImages, zoom, prevZoom;
-var prevFeatures = new Set();
-function renderMarkers(uniqueFeatures){
-
-  var features = map.queryRenderedFeatures({layers: ['tweets-layer']})
-  if (!features.length) return //If no features exist here, return
-
-  //Since we have vector tiles, need to only handle unique features
-  var uniqueFeatures = util.getUniqueGeometries(features).slice(0,markerHandler.load_lim); //Only ever take the load limit
-
-  //If markers go away, they need to be removed.
-  var theseFeatures = new Set();
-
-  uniqueFeatures.forEach(function(feature){
-
-    zoom = Math.floor(map.getZoom()) //This should function at 0.5 levels too
-    if(zoom!=prevZoom){
-      resize = true;
-      prevZoom = zoom;
-    }
-
-    if (markerHandler.activeMarkers.hasOwnProperty(feature.properties.id)){
-      //marker exists... do something about it?
-      theseFeatures.add(feature.properties.id)
-      if (resize) {
-        markerHandler.resize(feature.properties.id);
-      }
-      theseFeatures.add(feature.properties.id)
-    }else{
-      markerHandler.buildMarker(feature, zoom, map)
-
-      //Save it here
-      theseFeatures.add(feature.properties.id)
-    }
-  })
-  if(prevFeatures.size > 0){ //If there is a previous set
-    var difference = new Set([...prevFeatures].filter(x => !theseFeatures.has(x)));
-
-    difference.forEach(function(id) {
-      markerHandler.activeMarkers[id].remove()
-      delete markerHandler.activeMarkers[id];
-    });
-  }
-  prevFeatures = new Set(theseFeatures)
-}
-
 document.getElementById('image_size').addEventListener('change',function(e){
   markerHandler.img_width = e.target.value;
   markerHandler.img_height = e.target.value;
@@ -211,81 +242,27 @@ document.getElementById('image_size').addEventListener('change',function(e){
   renderMarkers();
 })
 
-//Deprecated
-/*var resize, newImages, zoom, prevZoom;
-var prevFeatures = new Set();
-function renderImages(uniqueFeatures){
-  resize = false
-
-  // Two types of events will fire this: zooming and panning.
-  zoom = Math.floor(map.getZoom()) //This should function at 0.5 levels too
-
-  if(zoom!=prevZoom){
-    resize = true;
-    prevZoom = zoom;
+document.getElementById('toggle-markers').addEventListener('click', function(){
+  if(markerHandler.on){
+    markerHandler.remove(map)
+  }else{
+    markerHandler.addMarkerLayer(map)
   }
+})
 
-  //Testing out the set action so that out of view features are dropped
-  var theseFeatures = new Set();
-
-  //Iterate over each feature, check if it exists yet.
-  uniqueFeatures.forEach(function(feature){
-
-    //If this source exists on the map, don't add it.
-    if (map.getSource("img_" + feature.properties.id)){
-
-      //The source exists, but it may be invisible, so turn it back on and call a resize
-      if( map.getLayoutProperty("img_"+feature.properties.id+"_layer",'visibility')=='none'){
-        map.setLayoutProperty("img_"+feature.properties.id+"_layer",'visibility','visible')
-        resize=true
-      }
-
-      //Check if the image needs to be resized (we have changed zoom levels)
-      if(resize){
-        map.getSource("img_"+feature.properties.id).setCoordinates(
-          imageHandler.buildCoordinates(feature.geometry.coordinates, zoom)
-        );
-      }
-      theseFeatures.add(feature.properties.id)
-
-    //The source does not exist, so we must add it.
-    }else{
-
-      //Wrap it in an error handler for safety
-      try{
-        map.addSource("img_"+feature.properties.id, imageHandler.buildImageSrc(feature, zoom))
-        imageHandler.activeSources.push("img_"+feature.properties.id)
-        //Once source is added, add the layer
-        try{
-          map.addLayer({
-            id: "img_" + feature.properties.id + '_layer',
-            source: "img_" + feature.properties.id,
-            type: 'raster',
-            paint: {"raster-opacity": 0.9}
-          })
-          theseFeatures.add(feature.properties.id)
-        }catch(e){
-          console.log("Error adding LAYER: ","img_" + feature.properties.id + '_layer')
-        }
-      }catch(e){
-        console.log("Error adding SOURCE ","img_"+feature.properties.id)
-      }
-    }
-  })
-
-  //So which features are no longer visible?
-  //This will add and remove items as needbe (perhaps we don't want to keep adding and removing sources, but just layers?)
-  if(prevFeatures.size > 0){ //If there is a previous set
-    var difference = new Set([...prevFeatures].filter(x => !theseFeatures.has(x)));
-
-    difference.forEach(function(id) {
-      map.setLayoutProperty("img_"+id+"_layer",'visibility','none')
-      // map.removeSource("img_"+id)
-    });
+document.getElementById('toggle-polygons').addEventListener('click', function(){
+  if(polygonHandler.on){
+    polygonHandler.remove(map)
+  }else{
+    polygonHandler.addPolygonLayers(map)
   }
-  prevFeatures = new Set(theseFeatures)
-}
-*/
+})
+
+document.getElementById('images').addEventListener('scroll', function(){
+  if(polygonHandler.on){
+    polygonHandler.loadNextScreen()
+  }
+})
 
 map.on('load', function () {
 
@@ -294,30 +271,228 @@ map.on('load', function () {
     "data": markerHandler.geojson
   })
 
-  map.addLayer({
-    "id": "tweets-layer",
-    "type": "circle",
-    "source": 'tweets'
-  });
+  polygonHandler.addSource(map)
+
+  //Add the Polygons
+  polygonHandler.addPolygonLayers(map)
+
+  //Add the Markers
+  //markerHandler.addMarkerLayer(map)
+  markerHandler.on = false;
 
   // The worker
   map.on('moveend',function(){
-    renderMarkers()
+    if(markerHandler.on) markerHandler.renderMarkers(map)
+    if(polygonHandler.on) polygonHandler.list_visible_features(map)
   })
 
 });
 
-var initialRender = setInterval(function(){
-  if(map.loaded()){
-    renderMarkers()
-    clearInterval(initialRender)
-    console.log("Rendering")
-  }else{
-    console.log("Waiting on map...")
-  }
-},1000)
+},{"../lib/functions.js":5,"./image_maps.js":1,"./image_markers.js":2,"./polygon_layers.js":4}],4:[function(require,module,exports){
+var util = require("../lib/functions.js")
 
-},{"../lib/functions.js":4,"./image_maps.js":1,"./image_markers.js":2}],4:[function(require,module,exports){
+var popup = new mapboxgl.Popup({
+
+})
+
+module.exports = function(config){
+
+  this.img_height = config.img_height
+  this.img_width  = config.img_width
+  this.img_dir    = config.img_dir
+  this.extension  = config.extension
+  this.geojson    = config.geojson
+  this.load_lim   = config.load_lim
+  this.title      = 'polygon-tweets'
+
+  this.on         = true;
+
+  this.addSource = function(map){
+    map.addSource(this.title,{
+      type: "geojson",
+      data: this.geojson
+    })
+  }
+
+  var layers = ['xxl-polygons','xl-polygons', 'l-polygons','m-polygons','s-polygons']
+
+  this.addPolygonLayers = function(map){
+    this.on=true;
+    //Add the 6 different layers for various zoom performance
+    map.addLayer({
+      'id': "xxl-polygons",
+      'type': "fill",
+      'source': 'polygon-tweets',
+      'paint':{
+        'fill-opacity':0.1,
+        'fill-color': 'salmon'
+      },
+      'filter': ['>', 'area', 40000],
+      'maxzoom': 4.5
+    })
+    map.addLayer({
+      'id': "xl-polygons",
+      'type': "fill",
+      'source': 'polygon-tweets',
+      'paint':{
+        'fill-opacity':0.1,
+        'fill-color': 'salmon'
+      },
+      'filter': ['all',
+        ['>', 'area', 20000],
+        ['<=','area', 40000]
+      ],
+      'maxzoom': 8.5
+    })
+    map.addLayer({
+      'id': "l-polygons",
+      'type': "fill",
+      'source': 'polygon-tweets',
+      'paint':{
+        'fill-opacity':0.1,
+        'fill-color': 'salmon'
+      },
+      'filter': ['all',
+        ['>', 'area', 10000],
+        ['<=','area',20000]
+      ],
+      'maxzoom': 8.5
+    })
+    map.addLayer({
+      'id': "m-polygons",
+      'type': "fill",
+      'source': 'polygon-tweets',
+      'paint':{
+        'fill-opacity':0.3,
+        'fill-color': 'salmon'
+      },
+      'filter': ['all',
+        ['>', 'area', 1000],
+        ['<=','area',10000]
+      ],
+      'maxzoom': 9.5,
+      'minzoom': 4
+    })
+    map.addLayer({
+      'id': "s-polygons",
+      'type': "fill",
+      'source': 'polygon-tweets',
+      'paint':{
+        'fill-opacity':0.5,
+        'fill-color': 'salmon'
+      },
+      'filter': ['<=', 'area', 1000],
+      'minzoom': 5
+    })
+
+    // map.addLayer({
+    //       "id": "polygon-fills-hover",
+    //       "type": "fill",
+    //       "source": "polygon-tweets",
+    //       "layout": {},
+    //       "paint": {
+    //           "fill-color": "#627BC1",
+    //           "fill-opacity": 0.5
+    //       },
+    //       "filter": ["==", "displayName", ""]
+    //   });
+
+
+    var that = this;
+    that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
+    layers.forEach(function(layer){
+      map.on('click',layer,function(e){
+        that.polygonClick(e, map)
+      })
+    });
+  }
+
+  this.polygonClick = function(e, map){
+    map.getCanvas().style.cursor = 'pointer';
+    //map.setFilter('polygon-fills-hover', ["==", "displayName", e.features[0].properties.displayName])
+    this.polyPopup.setLngLat(e.features[0].geometry.coordinates[0][1])
+        .setHTML(`<h4>Name: ${e.features[0].properties.displayName}</h4>
+          <h4>Area: ${e.features[0].properties.area}</h4>
+          <h4>Tweets: ${e.features[0].properties.count}</h4>`)
+        .addTo(map);
+  }
+
+  this.list_visible_features = function(map){
+    var features = map.queryRenderedFeatures({layers:layers})
+    if (!features.length) return
+
+    var limit = 100;
+
+    //Clear the current list of images
+    var list = document.getElementById('images')
+    list.innerHTML = "";
+
+    //Creating a new list of unique Tweets
+    var uniqueTweets = {}
+
+    //Loop through the features, find unique ids, exit if necessary.
+    featureLoop:
+      for (var f_idx=0; f_idx < features.length; f_idx++){
+        //Get the tweets array back from the original feature
+        var tweets = JSON.parse(features[f_idx].properties.tweets)
+        for(var i=0; i<tweets.length; i++){
+          //Check if we've seeen this tweet?
+          if(!uniqueTweets.hasOwnProperty(tweets[i].id)){
+            uniqueTweets[tweets[i].id] = tweets[i]
+            if (Object.keys(uniqueTweets).length >= limit){
+              break featureLoop
+            }
+          }
+        }
+      }
+
+    //Now loop through these features and build the tweets.
+    Object.keys(uniqueTweets).slice(0,10).forEach(function(id){
+      var li = document.createElement('li')
+        li.className = 'visible-image'
+        li.innerHTML = `<p>Tweet:</p><p>${uniqueTweets[id].id}</p>`
+        li.style.backgroundImage = 'url(' + `${uniqueTweets[id].thumb}` + ')';
+        delete uniqueTweets[id]
+      list.appendChild(li)
+    })
+
+    this.extraImages = uniqueTweets
+
+  }
+
+  /*
+    This function will be called when the 'next' arrow is pressed to load more images for a given area
+  */
+  this.loadNextScreen = function(){
+    console.log("There are another " + Object.keys(this.extraImages).length + " tweets to load")
+
+    var that = this;
+    var list = document.getElementById('images')
+    Object.keys(that.extraImages).slice(0,10).forEach(function(id){
+      var li = document.createElement('li')
+        li.className = 'visible-image'
+        li.innerHTML = `<p>Tweet:</p><p>${that.extraImages[id].id}</p>`
+        li.style.backgroundImage = 'url(' + `${that.extraImages[id].thumb}` + ')';
+        delete that.extraImages[id]
+      list.appendChild(li)
+    })
+
+
+  }
+
+  this.remove = function(map){
+    this.on = false;
+    var that = this
+    layers.forEach(function(layer){
+      map.removeLayer(layer)
+    })
+    // map.removeLayer("polygon-fills-hover")
+  }
+
+
+}
+
+},{"../lib/functions.js":5}],5:[function(require,module,exports){
 module.exports = {
   /* https://www.mapbox.com/mapbox-gl-js/example/filter-features-within-map-view/ */
   getUniqueFeatures: function(array, comparatorProperty) {
@@ -352,7 +527,8 @@ module.exports = {
       });
 
       return uniqueFeatures;
-  }
+  },
+
 }
 
 },{}]},{},[3]);
