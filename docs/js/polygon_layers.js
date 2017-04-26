@@ -1,3 +1,5 @@
+var util = require("../lib/functions.js")
+
 var popup = new mapboxgl.Popup({
 
 })
@@ -31,7 +33,7 @@ module.exports = function(config){
       'type': "fill",
       'source': 'polygon-tweets',
       'paint':{
-        'fill-opacity':0.5,
+        'fill-opacity':0.1,
         'fill-color': 'salmon'
       },
       'filter': ['>', 'area', 40000],
@@ -42,7 +44,7 @@ module.exports = function(config){
       'type': "fill",
       'source': 'polygon-tweets',
       'paint':{
-        'fill-opacity':0.5,
+        'fill-opacity':0.1,
         'fill-color': 'salmon'
       },
       'filter': ['all',
@@ -56,7 +58,7 @@ module.exports = function(config){
       'type': "fill",
       'source': 'polygon-tweets',
       'paint':{
-        'fill-opacity':0.5,
+        'fill-opacity':0.1,
         'fill-color': 'salmon'
       },
       'filter': ['all',
@@ -70,14 +72,15 @@ module.exports = function(config){
       'type': "fill",
       'source': 'polygon-tweets',
       'paint':{
-        'fill-opacity':0.5,
+        'fill-opacity':0.3,
         'fill-color': 'salmon'
       },
       'filter': ['all',
         ['>', 'area', 1000],
         ['<=','area',10000]
       ],
-      'maxzoom': 10.5
+      'maxzoom': 9.5,
+      'minzoom': 4
     })
     map.addLayer({
       'id': "s-polygons",
@@ -87,19 +90,21 @@ module.exports = function(config){
         'fill-opacity':0.5,
         'fill-color': 'salmon'
       },
-      'filter': ['<=', 'area', 1000]
+      'filter': ['<=', 'area', 1000],
+      'minzoom': 5
     })
-    map.addLayer({
-          "id": "polygon-fills-hover",
-          "type": "fill",
-          "source": "polygon-tweets",
-          "layout": {},
-          "paint": {
-              "fill-color": "#627BC1",
-              "fill-opacity": 0.5
-          },
-          "filter": ["==", "displayName", ""]
-      });
+
+    // map.addLayer({
+    //       "id": "polygon-fills-hover",
+    //       "type": "fill",
+    //       "source": "polygon-tweets",
+    //       "layout": {},
+    //       "paint": {
+    //           "fill-color": "#627BC1",
+    //           "fill-opacity": 0.5
+    //       },
+    //       "filter": ["==", "displayName", ""]
+    //   });
 
 
     var that = this;
@@ -113,12 +118,62 @@ module.exports = function(config){
 
   this.polygonClick = function(e, map){
     map.getCanvas().style.cursor = 'pointer';
-    map.setFilter('polygon-fills-hover', ["==", "displayName", e.features[0].properties.displayName])
+    //map.setFilter('polygon-fills-hover', ["==", "displayName", e.features[0].properties.displayName])
     this.polyPopup.setLngLat(e.features[0].geometry.coordinates[0][1])
         .setHTML(`<h4>Name: ${e.features[0].properties.displayName}</h4>
           <h4>Area: ${e.features[0].properties.area}</h4>
           <h4>Tweets: ${e.features[0].properties.count}</h4>`)
         .addTo(map);
+  }
+
+  this.list_visible_features = function(map){
+    var features = map.queryRenderedFeatures({layers:layers})
+    if (!features.length) return
+
+    var limit = 100;
+
+    //Clear the current list of images
+    var list = document.getElementById('images')
+    list.innerHTML = "";
+
+    //Creating a new list of unique Tweets
+    var uniqueTweets = {}
+
+    //Loop through the features, find unique ids, exit if necessary.
+    featureLoop:
+      for (var f_idx=0; f_idx < features.length; f_idx++){
+        //Get the tweets array back from the original feature
+        var tweets = JSON.parse(features[f_idx].properties.tweets)
+        for(var i=0; i<tweets.length; i++){
+          //Check if we've seeen this tweet?
+          if(!uniqueTweets.hasOwnProperty(tweets[i].id)){
+            uniqueTweets[tweets[i].id] = tweets[i]
+            if (Object.keys(uniqueTweets).length >= limit){
+              break featureLoop
+            }
+          }
+        }
+      }
+
+    //Now loop through these features and build the tweets.
+    Object.keys(uniqueTweets).slice(0,15).forEach(function(id){
+      var li = document.createElement('li')
+        li.className = 'visible-image'
+        li.innerHTML = `<p>Tweet:</p><p>${uniqueTweets[id].id}</p>`
+        li.style.backgroundImage = 'url(' + `${uniqueTweets[id].thumb}` + ')';
+        delete uniqueTweets[id]
+      list.appendChild(li)
+    })
+
+    this.extraImages = uniqueTweets
+
+  }
+
+  /*
+    This function will be called when the 'next' arrow is pressed to load more images for a given area
+  */
+  this.loadNextScreen = function(){
+    console.log("There are another " + Object.keys(this.extraImages).length + " tweets to load")
   }
 
   this.remove = function(map){
@@ -127,7 +182,7 @@ module.exports = function(config){
     layers.forEach(function(layer){
       map.removeLayer(layer)
     })
-    map.removeLayer("polygon-fills-hover")
+    // map.removeLayer("polygon-fills-hover")
   }
 
 

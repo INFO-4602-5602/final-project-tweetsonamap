@@ -5,3 +5,10 @@
   cursor: pointer;
   padding: 0;
 }
+
+.visible-image{
+  height:150px;
+  width:150px;
+  display:inline-block;
+  border: 1px solid black;
+}

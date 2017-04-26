@@ -6,8 +6,8 @@ var MarkerHandler  = require('./image_markers.js')
 var PolygonHandler = require('./polygon_layers.js')
 
 var markerHandler = new MarkerHandler({
-  img_height: 150,
-  img_width:  150,
+  img_height: 100,
+  img_width:  100,
   img_dir:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
   geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis-insta10000.geojson',
   load_lim:   100,
@@ -70,11 +70,13 @@ map.on('load', function () {
   polygonHandler.addPolygonLayers(map)
 
   //Add the Markers
-  markerHandler.addMarkerLayer(map)
+  //markerHandler.addMarkerLayer(map)
+  markerHandler.on = false;
 
   // The worker
   map.on('moveend',function(){
     if(markerHandler.on) markerHandler.renderMarkers(map)
+    if(polygonHandler.on) polygonHandler.list_visible_features(map)
   })
 
 });
