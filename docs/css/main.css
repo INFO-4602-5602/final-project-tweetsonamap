@@ -1,3 +1,5 @@
+body { margin:0 auto; padding:0;}
+#map { height:80%; width:100%; }
 .marker {
   display: block;
   border: none;
@@ -6,9 +8,22 @@
   padding: 0;
 }
 
+#image-carousel{
+  height:20%;
+  max-height:150px;
+  overflow-x:scroll;
+  overflow-y:hidden;
+}
+
+#images{
+  overflow-x:hidden;
+  overflow-y:hidden;
+}
+
 .visible-image{
-  height:150px;
-  width:150px;
+  width:10%;
+  min-width:150px;
+  min-height:150px;
   display:inline-block;
   border: 1px solid black;
 }

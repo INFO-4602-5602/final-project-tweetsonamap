@@ -441,7 +441,7 @@ module.exports = function(config){
       }
 
     //Now loop through these features and build the tweets.
-    Object.keys(uniqueTweets).slice(0,15).forEach(function(id){
+    Object.keys(uniqueTweets).slice(0,10).forEach(function(id){
       var li = document.createElement('li')
         li.className = 'visible-image'
         li.innerHTML = `<p>Tweet:</p><p>${uniqueTweets[id].id}</p>`
