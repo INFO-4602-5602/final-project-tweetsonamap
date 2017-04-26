@@ -57,6 +57,12 @@ document.getElementById('toggle-polygons').addEventListener('click', function(){
   }
 })
 
+document.getElementById('images').addEventListener('scroll', function(){
+  if(polygonHandler.on){
+    polygonHandler.loadNextScreen()
+  }
+})
+
 map.on('load', function () {
 
   map.addSource('tweets',{

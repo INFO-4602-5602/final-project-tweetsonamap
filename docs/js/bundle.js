@@ -258,6 +258,12 @@ document.getElementById('toggle-polygons').addEventListener('click', function(){
   }
 })
 
+document.getElementById('images').addEventListener('scroll', function(){
+  if(polygonHandler.on){
+    polygonHandler.loadNextScreen()
+  }
+})
+
 map.on('load', function () {
 
   map.addSource('tweets',{
@@ -459,6 +465,19 @@ module.exports = function(config){
   */
   this.loadNextScreen = function(){
     console.log("There are another " + Object.keys(this.extraImages).length + " tweets to load")
+
+    var that = this;
+    var list = document.getElementById('images')
+    Object.keys(that.extraImages).slice(0,10).forEach(function(id){
+      var li = document.createElement('li')
+        li.className = 'visible-image'
+        li.innerHTML = `<p>Tweet:</p><p>${that.extraImages[id].id}</p>`
+        li.style.backgroundImage = 'url(' + `${that.extraImages[id].thumb}` + ')';
+        delete that.extraImages[id]
+      list.appendChild(li)
+    })
+
+
   }
 
   this.remove = function(map){
