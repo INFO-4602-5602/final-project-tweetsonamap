@@ -13,6 +13,7 @@ module.exports = function(config){
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
   this.title      = 'polygon-tweets'
+  this.queryLayers = []
 
   this.on         = true;
 
@@ -22,78 +23,27 @@ module.exports = function(config){
       data: this.geojson
     })
   }
-
-  var layers = ['xxl-polygons','xl-polygons', 'l-polygons','m-polygons','s-polygons']
-
-  this.addPolygonLayers = function(map){
+  this.addPolygonLayers = function(map, featureLevels){
     this.on=true;
-    //Add the 6 different layers for various zoom performance
-    map.addLayer({
-      'id': "xxl-polygons",
-      'type': "fill",
-      'source': 'polygon-tweets',
-      'paint':{
-        'fill-opacity':0.1,
-        'fill-color': 'salmon'
-      },
-      'filter': ['>', 'area', 40000],
-      'maxzoom': 4.5
-    })
-    map.addLayer({
-      'id': "xl-polygons",
-      'type': "fill",
-      'source': 'polygon-tweets',
-      'paint':{
-        'fill-opacity':0.1,
-        'fill-color': 'salmon'
-      },
-      'filter': ['all',
-        ['>', 'area', 20000],
-        ['<=','area', 40000]
-      ],
-      'maxzoom': 8.5
-    })
-    map.addLayer({
-      'id': "l-polygons",
-      'type': "fill",
-      'source': 'polygon-tweets',
-      'paint':{
-        'fill-opacity':0.1,
-        'fill-color': 'salmon'
-      },
-      'filter': ['all',
-        ['>', 'area', 10000],
-        ['<=','area',20000]
-      ],
-      'maxzoom': 8.5
-    })
-    map.addLayer({
-      'id': "m-polygons",
-      'type': "fill",
-      'source': 'polygon-tweets',
-      'paint':{
-        'fill-opacity':0.3,
-        'fill-color': 'salmon'
-      },
-      'filter': ['all',
-        ['>', 'area', 1000],
-        ['<=','area',10000]
-      ],
-      'maxzoom': 9.5,
-      'minzoom': 4
-    })
-    map.addLayer({
-      'id': "s-polygons",
-      'type': "fill",
-      'source': 'polygon-tweets',
-      'paint':{
-        'fill-opacity':0.5,
-        'fill-color': 'salmon'
-      },
-      'filter': ['<=', 'area', 1000],
-      'minzoom': 5
-    })
+    var that = this;
 
+    featureLevels.forEach(function(level){
+
+      that.queryLayers.push(level.name + "-fill-layer")
+      map.addLayer({
+        'id': level.name + "-fill-layer",
+        'type': "fill",
+        'source': 'polygon-tweets',
+        'paint':{
+          'fill-opacity':0.1,
+          'fill-color': 'salmon'
+        },
+        'filter': level.filter,
+        'maxzoom': level.maxzoom,
+        'minzoom': level.minzoom+3
+      })
+    })
+    //Add the 6 different layers for various zoom performance
     // map.addLayer({
     //       "id": "polygon-fills-hover",
     //       "type": "fill",
@@ -109,8 +59,8 @@ module.exports = function(config){
 
     var that = this;
     that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
-    layers.forEach(function(layer){
-      map.on('click',layer,function(e){
+    featureLevels.forEach(function(layer){
+      map.on('click',layer.name+"-fill-layer",function(e){
         that.polygonClick(e, map)
       })
     });
@@ -127,46 +77,51 @@ module.exports = function(config){
   }
 
   this.list_visible_features = function(map){
-    var features = map.queryRenderedFeatures({layers:layers})
-    if (!features.length) return
+    try{
+      var features = map.queryRenderedFeatures({layers:this.queryLayers})
+      if (!features.length) return
 
-    var limit = 100;
+      console.log("Found " + features.length + " features")
 
-    //Clear the current list of images
-    var list = document.getElementById('images')
-    list.innerHTML = "";
+      var limit = 100;
 
-    //Creating a new list of unique Tweets
-    var uniqueTweets = {}
+      //Clear the current list of images
+      var list = document.getElementById('images')
+      list.innerHTML = "";
 
-    //Loop through the features, find unique ids, exit if necessary.
-    featureLoop:
-      for (var f_idx=0; f_idx < features.length; f_idx++){
-        //Get the tweets array back from the original feature
-        var tweets = JSON.parse(features[f_idx].properties.tweets)
-        for(var i=0; i<tweets.length; i++){
-          //Check if we've seeen this tweet?
-          if(!uniqueTweets.hasOwnProperty(tweets[i].id)){
-            uniqueTweets[tweets[i].id] = tweets[i]
-            if (Object.keys(uniqueTweets).length >= limit){
-              break featureLoop
+      //Creating a new list of unique Tweets
+      var uniqueTweets = {}
+
+      //Loop through the features, find unique ids, exit if necessary.
+      featureLoop:
+        for (var f_idx=0; f_idx < features.length; f_idx++){
+          //Get the tweets array back from the original feature
+          var tweets = JSON.parse(features[f_idx].properties.tweets)
+          for(var i=0; i<tweets.length; i++){
+            //Check if we've seeen this tweet?
+            if(!uniqueTweets.hasOwnProperty(tweets[i].id)){
+              uniqueTweets[tweets[i].id] = tweets[i]
+              if (Object.keys(uniqueTweets).length >= limit){
+                break featureLoop
+              }
             }
           }
         }
-      }
 
-    //Now loop through these features and build the tweets.
-    Object.keys(uniqueTweets).slice(0,10).forEach(function(id){
-      var li = document.createElement('li')
-        li.className = 'visible-image'
-        li.innerHTML = `<p>Tweet:</p><p>${uniqueTweets[id].id}</p>`
-        li.style.backgroundImage = 'url(' + `${uniqueTweets[id].thumb}` + ')';
-        delete uniqueTweets[id]
-      list.appendChild(li)
-    })
+      //Now loop through these features and build the tweets.
+      Object.keys(uniqueTweets).slice(0,10).forEach(function(id){
+        var li = document.createElement('li')
+          li.className = 'visible-image'
+          li.innerHTML = `<p>Tweet:</p><p>${uniqueTweets[id].id}</p>`
+          //li.style.backgroundImage = 'url(' + `${uniqueTweets[id].thumb}` + ')';
+          delete uniqueTweets[id]
+        list.appendChild(li)
+      })
 
-    this.extraImages = uniqueTweets
-
+      this.extraImages = uniqueTweets
+    }catch(e){
+      console.log("Could not query layer")
+    }
   }
 
   /*
@@ -192,10 +147,18 @@ module.exports = function(config){
   this.remove = function(map){
     this.on = false;
     var that = this
-    layers.forEach(function(layer){
+    that.queryLayers.forEach(function(layer){
       map.removeLayer(layer)
     })
     // map.removeLayer("polygon-fills-hover")
+  }
+
+  this.hide = function(map){
+    this.queryLayers.forEach(function(activeLayer){
+      map.getLayoutProperty(activeLayer,'visibility','none')
+    })
+    this.queryLayers = []
+    this.on = false;
   }
 
 
