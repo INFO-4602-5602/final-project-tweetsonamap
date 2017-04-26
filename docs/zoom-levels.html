@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.35.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.35.1/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox.js/v3.0.1/mapbox.js'></script>
+    <link href='https://api.mapbox.com/mapbox.js/v3.0.1/mapbox.css' rel='stylesheet' />
+
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A';
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    zoom: 9,
+    center: [137.9150899566626, 36.25956997955441],
+    style: 'mapbox://styles/mapbox/streets-v9',
+    hash: true,
+    minZoom: 1
+});
+
+map.once('load',function(){
+  // map.showTileBoundaries = true
+
+  map.addSource('polygon-tweets',{
+    type: "geojson",
+    data: "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/poly-full.geojson"
+  })
+
+  map.addLayer({
+    'id': "xxl-polygons",
+    'type': "fill",
+    'source': 'polygon-tweets',
+    'paint':{
+      'fill-opacity':0.5,
+      'fill-color': 'salmon'
+    },
+    'filter': ['>', 'area', 40000],
+    'maxzoom': 4.5
+  })
+
+  map.addLayer({
+    'id': "xl-polygons",
+    'type': "fill",
+    'source': 'polygon-tweets',
+    'paint':{
+      'fill-opacity':0.5,
+      'fill-color': 'salmon'
+    },
+    'filter': ['all',
+      ['>', 'area', 20000],
+      ['<=','area', 40000]
+    ],
+    'maxzoom': 8.5
+  })
+
+  map.addLayer({
+    'id': "l-polygons",
+    'type': "fill",
+    'source': 'polygon-tweets',
+    'paint':{
+      'fill-opacity':0.5,
+      'fill-color': 'salmon'
+    },
+    'filter': ['all',
+      ['>', 'area', 10000],
+      ['<=','area',20000]
+    ],
+    'maxzoom': 8.5
+  })
+
+  map.addLayer({
+    'id': "m-polygons",
+    'type': "fill",
+    'source': 'polygon-tweets',
+    'paint':{
+      'fill-opacity':0.5,
+      'fill-color': 'salmon'
+    },
+    'filter': ['all',
+      ['>', 'area', 1000],
+      ['<=','area',10000]
+    ],
+    'maxzoom': 10.5
+  })
+
+  map.addLayer({
+    'id': "s-polygons",
+    'type': "fill",
+    'source': 'polygon-tweets',
+    'paint':{
+      'fill-opacity':0.5,
+      'fill-color': 'salmon'
+    },
+    'filter': ['<=', 'area', 1000]
+  })
+
+  map.addLayer({
+        "id": "polygon-fills-hover",
+        "type": "fill",
+        "source": "polygon-tweets",
+        "layout": {},
+        "paint": {
+            "fill-color": "#627BC1",
+            "fill-opacity": 0.5
+        },
+        "filter": ["==", "displayName", ""]
+    });
+
+  var layers = ['xxl-polygons','xl-polygons', 'l-polygons','m-polygons','s-polygons']
+
+  var popup = new mapboxgl.Popup({closeOnClick:true}).addTo(map);
+
+  // map.on('mouseenter','s-polygons',function(e){
+  //
+  //   map.getCanvas().style.cursor = 'pointer';
+  //
+  //   map.setFilter('polygon-fills-hover', ["==", "displayName", e.features[0].properties.displayName])
+  //
+  //   popup.setLngLat(e.features[0].geometry.coordinates[0][1])
+  //     .setHTML(`<h4>${e.features[0].properties.displayName}</h4><h4>${e.features[0].properties.area}</h4>`)
+  //     .addTo(map);
+  //
+  // })
+
+})
+
+
+
+
+
+//
+// L.mapbox.accessToken = 'pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A';
+//
+//
+// var map = L.mapbox.map('map', 'mapbox.streets')
+//     .setView([0, 0], 9);
+//
+// var layer = L.mapbox.tileLayer('jenningsanderson.4212xm80')
+//
+// layer.addTo(map)
+
+</script>
+
+</body>
+</html>
