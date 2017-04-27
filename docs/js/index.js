@@ -8,13 +8,11 @@ var MarkerHandler  = require('./image_markers.js')
 var PolygonHandler = require('./polygon_layers.js')
 var PolyCentersHandler = require('./polygon-centers_layer.js')
 var ImageScroller  = require('./image_scroller.js')
-
-
 var Timeline = require('./timeline.js')
 
+//Initialize the timeline
 var tweetTimeline = new Timeline()
 tweetTimeline.createTimeline()
-
 
 var markerHandler = new MarkerHandler({
   img_height: 100,

@@ -6,7 +6,7 @@ module.exports = function(config){
 
   this.img_height = config.img_height
   this.img_width  = config.img_width
-  this.img_url    = config.img_url
+  this.img_dir    = config.img_url
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
   this.on         = false;
@@ -50,7 +50,8 @@ module.exports = function(config){
 
     var markerDiv  = document.createElement('div')
         markerDiv.className = 'marker';
-        markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}${this.extension}` + ')';
+        // markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}${this.extension}` + ')';
+        markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}` + '.jpg)';
         markerDiv.style.width  = this.img_width+'px';
         markerDiv.style.height = this.img_height+'px';
 
