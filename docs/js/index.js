@@ -20,6 +20,7 @@ var markerHandler = new MarkerHandler({
   img_height: 100,
   img_width:  100,
   geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson',
+  img_url:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
   load_lim:   100,
   title:      'geotagged-point-images'
 })
@@ -59,12 +60,14 @@ var initialLoading = setInterval(function(){
   if(map.loaded()){
     clearInterval(initialLoading)
     // document.getElementById('blocker').style="display:none;"
-    console.log("Map loaded")
+    document.getElementById('loading-status').innerHTML = 'Loaded'
+    document.getElementById('loading-bar').className = "m6"
 
     //Fire it up...
     map.fire('moveend')
   }else{
-    console.log("Waiting on map...")
+    document.getElementById('loading-status').innerHTML = 'Loading map'
+    document.getElementById('loading-bar').className = "loading m6"
   }
 },1000)
 
@@ -72,36 +75,76 @@ map.addControl(new MapboxGeocoder({
   accessToken: mapboxgl.accessToken
 }));
 
-// document.getElementById('image_size').addEventListener('change',function(e){
-//   markerHandler.img_width = e.target.value;
-//   markerHandler.img_height = e.target.value;
-//   resize = true;
-//   renderMarkers();
-// })
+document.getElementById('render-markers').addEventListener('change', function(e){
+  if(e.target.checked){
+    //Double check, if show-geo-tagged-tweets isn't checked, it better be :)
+    if(!document.getElementById('show-geotagged-tweets').checked ){
+      console.log("GeoTagged tweets needs to be on first.")
+      document.getElementById('show-geotagged-tweets').checked = 'checked'
+      map.setLayoutProperty('marker-layer', 'visibility', 'visible')
+    }
+    var holdUp = setInterval(function(){
+      if(map.loaded()){
+        clearInterval(holdUp)
+        markerHandler.renderMarkers(map)
+      }else{
+        console.log(".")
+      }
+    },500)
+  }else{
+    console.log("Don't render markers")
+    markerHandler.removeAllMarkers(map)
+  }
+});
 
-document.getElementById('toggle-markers').addEventListener('click', function(){
-  // if(markerHandler.on){
-  //   markerHandler.remove(map)
-  // }else{
-  //   markerHandler.addMarkerLayer(map)
-  // }
-})
+document.getElementById('show-geotagged-tweets').addEventListener('change', function(e){
+  if (e.target.checked){
+    map.setLayoutProperty('marker-layer', 'visibility', 'visible')
+  }else{
+    map.setLayoutProperty('marker-layer', 'visibility', 'none')
 
-document.getElementById('toggle-polygons').addEventListener('click', function(){
-  // if(polygonHandler.on){
-  //   polygonHandler.remove(map)
-  // }else{
-  //   polygonHandler.addPolygonLayers(map)
-  // }
-})
+    if (document.getElementById('render-markers').checked){
+      document.getElementById('render-markers').checked = null;
+      markerHandler.removeAllMarkers(map)
+    }
+  }
+  var holdUp = setInterval(function(){
+    if(map.loaded()){
+      clearInterval(holdUp)
+      map.fire('moveend')
+    }else{
+      console.log(".")
+    }
+  },500)
+});
+
+document.getElementById('show-polygon-tweets').addEventListener('change', function(e){
+  if (e.target.checked){
+    console.log("Polygons on")
+    polygonHandler.show(map)
+    polyCentersHandler.show(map)
+  }else{
+    console.log("Turning polygons off")
+    polygonHandler.hide(map)
+    polyCentersHandler.hide(map)
+  }
+  var holdUp = setInterval(function(){
+    if(map.loaded()){
+      clearInterval(holdUp)
+      map.fire('moveend')
+    }else{
+      document.getElementById('loading-status').innerHTML = 'Loading Tweets...'
+      document.getElementById('loading-bar').className = "loading m6"
+    }
+  },500)
+});
+
 
 document.getElementById('images').addEventListener('scroll', function(){
-  if(polygonHandler.on){
-    imageScroller.loadMore()
-  }
-})
+  imageScroller.loadMore()
+});
 
-map.on('load', function () {
+map.once('load', function () {
 
   //Add sources
   markerHandler.addSource(map)
@@ -110,30 +153,48 @@ map.on('load', function () {
 
   //Add the markers
   markerHandler.addMarkerLayer(map)
+
   //Add the Polygons
   polygonHandler.addPolygonLayers(map)
 
   //Add the centers
-  // polyCentersHandler.addCirclesLayer(map)
-
-  //Add the Markers
-  // markerHandler.addMarkerLayer(map)
+  polyCentersHandler.addCirclesLayer(map)
 
   // The worker to control the images.  Needs to check EVERY layer
   map.on('moveend',function(){
-    console.log("Firing moveend")
-    var visibleFeatures = []
+    imageScroller.working = true;
+    document.getElementById('loading-status').innerHTML = "Querying Map"
+    document.getElementById('loading-bar').className = "loading m6"
 
-    if(markerHandler.on){
-      // markerHandler.renderMarkers(map)
-      visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
-    }
-    if(polygonHandler.on){
-      visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
-    }
+    var holdUp = setInterval(function(){
+      if(map.loaded()){
+        clearInterval(holdUp)
 
-    console.log("Calling image scroller with ", visibleFeatures.length)
-    imageScroller.renderTweets(visibleFeatures, map)
 
+        var visibleFeatures = []
+
+        if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
+        visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
+        visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
+
+
+        imageScroller.renderTweets(visibleFeatures, map)
+
+        var imageHoldUp = setInterval(function(){
+          if (!imageScroller.working){
+            clearInterval(imageHoldUp)
+            document.getElementById('loading-bar').className = "m6"
+            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images`
+          }else{
+            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images...`
+            //document.getElementById('loading-bar').className = "loading m6"
+          }
+        },100);
+
+      }else{
+        document.getElementById('loading-status').innerHTML = 'Loading Map...'
+        document.getElementById('loading-bar').className = "loading m6"
+      }
+    },500)
   })
-});
+})

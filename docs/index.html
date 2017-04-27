@@ -23,10 +23,6 @@
 
 <body>
 
-  <!-- <div id="blocker" class="flex-parent flex-parent--center-main flex-parent--center-cross" style=" z-index:100; position:fixed; top:0; left:0; height:100%; width:100%; cursor:wait;">
-    <h1 class="loading m18"></h1>
-  </div> -->
-
   <header class='grid'>
     <div class="col--2"></div>
     <div class="col--8" id="timeline">
@@ -38,8 +34,28 @@
   <section class='grid'>
 
     <div class="col--1">
-      <button id='toggle-markers' class='btn btn--s'>Toggle Markers</button>
-      <button id='toggle-polygons' class='btn btn--s'>Toggle Polygons</button>
+
+      <label class='switch-container'>
+        <input type='checkbox' id='render-markers'/>
+        <div class='switch switch--pink switch--dot-yellow mr6'></div>
+        GeoTagged Images On Map
+      </label>
+
+      <label class='switch-container'>
+        <input type='checkbox' checked='checked' id='show-geotagged-tweets'/>
+        <div class='switch switch--pink switch--dot-yellow mr6'></div>
+        Show geotagged points
+      </label>
+
+      <label class='switch-container'>
+        <input type='checkbox' checked='checked' id='show-polygon-tweets'/>
+        <div class='switch switch--pink switch--dot-yellow mr6'></div>
+        Show any geo-located tweet
+      </label>
+
+      <p class="ml6 mt12" id="loading-status">Status</p>
+      <h1 id="loading-bar"></h1>
+
     </div>
 
     <div id='map' class='col--10'></div>
@@ -49,20 +65,6 @@
     <ul id="images"></ul>
 
   </section>
-
-  <!-- <footer class="grid">
-    <div class="col--4">
-      <div id="image-settings" class='ml12'>
-        <input type="text"   class="input input--s txt-s w240" id="image_directory" placeholder="directory"
-          value="http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/"></input>
-        <input type="number" class="input input--s txt-s w48"  step="10" id="image_size"  placeholder="image size"  value=100></input>
-      </div>
-    </div>
-    <div class="col--4">
-      <p class="align-center">Info Vis &amp; Project EPIC 2017</p>
-    </div>
-    <div class="col--4"></div>
-  </footer> -->
 
 <script src="js/bundle.js"></script>
 

@@ -33,6 +33,8 @@ module.exports = function(config){
 
   this.on         = false;
 
+  this.activeLayers = []
+
 
   this.addSource = function(map){
     map.addSource(this.title,{
@@ -71,6 +73,8 @@ module.exports = function(config){
         'maxzoom' : level.maxzoom
       })
 
+      that.activeLayers.push(level.name + "-center-circle-layer")
+
       map.on('click',level.name + "-center-circle-layer",function(e){
         that.circleClick(e, map)
       });
@@ -106,52 +110,19 @@ module.exports = function(config){
           <h4>Tweets: ${e.features[0].properties.count}</h4>`)
         .addTo(map);
   }
-  //
-  // this.list_visible_features = function(map){
-  //   var features = map.queryRenderedFeatures({layers:layers})
-  //   if (!features.length) return
-  //
-  //   var limit = 100;
-  //
-  //   //Clear the current list of images
-  //   var list = document.getElementById('images')
-  //   list.innerHTML = "";
-  //
-  //   //Creating a new list of unique Tweets
-  //   var uniqueTweets = {}
-  //
-  //   //Loop through the features, find unique ids, exit if necessary.
-  //   featureLoop:
-  //     for (var f_idx=0; f_idx < features.length; f_idx++){
-  //       //Get the tweets array back from the original feature
-  //       var tweets = JSON.parse(features[f_idx].properties.tweets)
-  //       for(var i=0; i<tweets.length; i++){
-  //         //Check if we've seeen this tweet?
-  //         if(!uniqueTweets.hasOwnProperty(tweets[i].id)){
-  //           uniqueTweets[tweets[i].id] = tweets[i]
-  //           if (Object.keys(uniqueTweets).length >= limit){
-  //             break featureLoop
-  //           }
-  //         }
-  //       }
-  //     }
-  //
-  //   //Now loop through these features and build the tweets.
-  //   Object.keys(uniqueTweets).slice(0,10).forEach(function(id){
-  //     var li = document.createElement('li')
-  //       li.className = 'visible-image'
-  //       li.innerHTML = `<p>Tweet:</p><p>${uniqueTweets[id].id}</p>`
-  //       li.style.backgroundImage = 'url(' + `${uniqueTweets[id].thumb}` + ')';
-  //       delete uniqueTweets[id]
-  //     list.appendChild(li)
-  //   })
-  //
-  //   this.extraImages = uniqueTweets
 
-  // }
-
-  this.remove = function(map){
+  this.hide = function(map){
+    console.log("Turning it off?")
+    this.activeLayers.forEach(function(activeLayer){
+      map.setLayoutProperty(activeLayer,'visibility','none')
+    })
     this.on = false;
-    map.removeLayer('polygon-centers-layer')
+  }
+
+  this.show = function(map){
+    this.activeLayers.forEach(function(activeLayer){
+      map.setLayoutProperty(activeLayer,'visibility','visible')
+    })
+    this.on = true;
   }
 }

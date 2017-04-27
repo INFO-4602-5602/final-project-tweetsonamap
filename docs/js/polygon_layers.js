@@ -60,7 +60,7 @@ module.exports = function(config){
         'type': "fill",
         'source': 'polygon-tweets',
         'paint':{
-          'fill-opacity':0.2,
+          'fill-opacity':0,
           'fill-color': 'salmon'
         },
         'filter': level.filter,
@@ -115,23 +115,18 @@ module.exports = function(config){
         .addTo(map);
   }
 
-  /*
-    This function will be called when the 'next' arrow is pressed to load more images for a given area
-  */
-
-  this.remove = function(map){
-    this.on = false;
-    var that = this
-    that.queryLayers.forEach(function(layer){
-      map.removeLayer(layer)
+  this.hide = function(map){
+    console.log("Turning it off?")
+    this.queryLayers.forEach(function(activeLayer){
+      map.setLayoutProperty(activeLayer,'visibility','none')
     })
+    this.on = false;
   }
 
-  this.hide = function(map){
+  this.show = function(map){
     this.queryLayers.forEach(function(activeLayer){
-      map.getLayoutProperty(activeLayer,'visibility','none')
+      map.setLayoutProperty(activeLayer,'visibility','visible')
     })
-    this.queryLayers = []
-    this.on = false;
+    this.on = true;
   }
 }
