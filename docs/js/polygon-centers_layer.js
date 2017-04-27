@@ -1,7 +1,25 @@
 var util = require("../lib/functions.js")
 
-var popup = new mapboxgl.Popup({
-})
+var popup = new mapboxgl.Popup({})
+
+var featureLevels = [
+  {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
+                                                   maxzoom: 4.5,  minzoom: 2},
+  {'name' : 'xl-polygon',  filter: ['all',
+                                                  ['>', 'area', 20000],
+                                                  ['<=','area', 40000]
+                                                ], maxzoom: 8.5,  minzoom: 2},
+  {'name' : 'l-polygon',   filter: ['all',
+                                                  ['>', 'area', 10000],
+                                                  ['<=','area', 20000]
+                                                ], maxzoom: 8.5, minzoom: 2},
+  {'name' : 'm-polygon',   filter: ['all',
+                                                  ['>', 'area', 1000],
+                                                  ['<=','area',10000]
+                                                ], maxzoom: 9.5, minzoom: 2},
+  {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
+                                                  maxzoom: 22, minzoom: 2}]
+
 
 module.exports = function(config){
 
@@ -13,7 +31,7 @@ module.exports = function(config){
   this.load_lim   = config.load_lim
   this.title      = 'polygon-centers'
 
-  this.on         = true;
+  this.on         = false;
 
 
   this.addSource = function(map){
@@ -23,7 +41,7 @@ module.exports = function(config){
     })
   }
 
-  this.addCirclesLayer = function(map, featureLevels){
+  this.addCirclesLayer = function(map){
 
     this.on=true;
 
@@ -48,7 +66,9 @@ module.exports = function(config){
             'stops' : [[0,4],[9999999,100]]
           }
         },
-        'filter': level.filter
+        'filter': level.filter,
+        'minzoom' : level.minzoom,
+        'maxzoom' : level.maxzoom
       })
 
       map.on('click',level.name + "-center-circle-layer",function(e){
@@ -76,9 +96,6 @@ module.exports = function(config){
       //   'minzoom' : 5
       // })
     })
-
-    // var that = this;
-    //
   }
 
   this.circleClick = function(e, map){
@@ -132,10 +149,6 @@ module.exports = function(config){
   //   this.extraImages = uniqueTweets
 
   // }
-
-  /*
-    This function will be called when the 'next' arrow is pressed to load more images for a given area
-  */
 
   this.remove = function(map){
     this.on = false;

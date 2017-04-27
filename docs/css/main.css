@@ -10,8 +10,8 @@ body { margin:0 auto; padding:0;}
 
 #images{
   width: 98%;
-  height: 20%;
-  min-height:150px;
+  margin: 0 auto;
+  min-height:50px;
   display: block;
   white-space: nowrap;
   overflow-x: scroll;
@@ -19,9 +19,8 @@ body { margin:0 auto; padding:0;}
 }
 
 .visible-image{
-  width:10%;
-  min-width:150px;
-  min-height:150;
+  width:50px;
+  height:50px;
   display:inline-block;
   border: 1px solid black;
 }
