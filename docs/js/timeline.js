@@ -5,7 +5,7 @@ module.exports = function(config){
     this.createTimeline = function(){
     	console.log("Starting the timeline vis")
 
-        var margin = {top: 10, right: 10, bottom: 70, left: 60}; // Margin around visualization, including space for labels
+        var margin = {top: 10, right: 10, bottom: 40, left: 60}; // Margin around visualization, including space for labels
         var width = d3.select('#timeline').node().getBoundingClientRect().width - margin.left - margin.right; // Width of our visualization
         var height = 200 - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
@@ -55,8 +55,9 @@ module.exports = function(config){
             // Specify the axis scale and general position
             var xAxis = d3.svg.axis()
                               .scale(xScale)
+                              .ticks(5)
                               .orient("bottom")
-                              .tickFormat(d3.time.format("%Y-%m-%d"));
+                              .tickFormat(d3.time.format("%m/%d"))
                               // .ticks(5);
 
             var xAxisG = svg.append('g')
@@ -73,6 +74,9 @@ module.exports = function(config){
             // // Update width of chart to accommodate long rotated x-axis labels
             // d3.select("#timelinesvg")
             //         .attr("width", d3.select('#timeline').node().getBoundingClientRect().width)
+
+            d3.select("#timelinesvg")
+                    .attr("height", d3.select('#timeline').node().getBoundingClientRect().height)            
 
             // Repeat for the y-axis
             var yAxis = d3.svg.axis()
@@ -187,7 +191,7 @@ module.exports = function(config){
                 });
 
                 console.log('local=', [localBrushYearStart,localBrushYearEnd])
-                
+
             }
 
             function resetBrush() {
