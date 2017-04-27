@@ -7,7 +7,9 @@ module.exports = function(config){
   this.extraTweets = []
   this.working    = false;
 
-  this.renderTweets = function(tweets, map){
+  this.img_root   = config.img_root
+
+  this.renderTweets = function(tweets, map, popup){
 
     //Clear the current list of images
     var list = document.getElementById('images')
@@ -19,7 +21,7 @@ module.exports = function(config){
         //li.innerHTML = `<p>Tweet:</p><p>${tweet.properties.id}</p>`
         li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
         li.addEventListener('click',function(){
-          that.tweetClicked(tweet, map)
+          that.tweetClicked(tweet, map, popup)
         })
         list.appendChild(li)
     })
@@ -53,7 +55,16 @@ module.exports = function(config){
     }
   }
 
-  this.tweetClicked = function(tweet, map){
+  this.tweetClicked = function(tweet, map, popup){
+
+    popup
+     .setLngLat(tweet.geometry.coordinates)
+     .setHTML(`<div class='image-popup'>
+      <img src=
+   </div>`)
+     .addTo(map)
+
+
     console.log(tweet.geometry, tweet.properties)
   }
 

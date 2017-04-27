@@ -42,7 +42,8 @@ var polyCentersHandler = new PolyCentersHandler({
 })
 
 var imageScroller = new ImageScroller({
-  load_lim: 30
+  load_lim: 30,
+  img_root : siteConfig.img_root
 })
 
 // Map!
@@ -164,6 +165,9 @@ map.once('load', function () {
   polyCentersHandler.addCirclesLayer(map)
 
   // The worker to control the images.  Needs to check EVERY layer
+
+  var tweetPopUp = new mapboxgl.Popup({closeOnClick : 'true'})
+
   map.on('moveend',function(){
     imageScroller.working = true;
     document.getElementById('loading-status').innerHTML = "Querying Map"
@@ -184,7 +188,7 @@ map.once('load', function () {
 
         // var totalFeats = markerFeats[0] + polyFeats[0]
 
-        imageScroller.renderTweets(visibleFeatures, map)
+        imageScroller.renderTweets(visibleFeatures, map, tweetPopUp)
 
         var imageHoldUp = setInterval(function(){
           if (!imageScroller.working){
