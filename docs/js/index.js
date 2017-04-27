@@ -143,9 +143,10 @@ document.getElementById('show-polygon-tweets').addEventListener('change', functi
   },500)
 });
 
+var tweetPopUp = new mapboxgl.Popup({closeOnClick : 'true'})
 
 document.getElementById('images').addEventListener('scroll', function(){
-  imageScroller.loadMore()
+  imageScroller.loadMore(map, tweetPopUp)
 });
 
 map.once('load', function () {
@@ -166,7 +167,6 @@ map.once('load', function () {
 
   // The worker to control the images.  Needs to check EVERY layer
 
-  var tweetPopUp = new mapboxgl.Popup({closeOnClick : 'true'})
 
   map.on('moveend',function(){
     imageScroller.working = true;
@@ -176,8 +176,7 @@ map.once('load', function () {
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-
-
+        
         var visibleFeatures = []
 
         if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)

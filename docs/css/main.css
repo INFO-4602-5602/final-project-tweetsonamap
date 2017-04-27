@@ -1,5 +1,5 @@
 body { margin:0 auto; padding:0;}
-#map { height:60%; width:100%; }
+#map { height:90%; width:100%; }
 .marker {
   display: block;
   border: none;
@@ -9,9 +9,9 @@ body { margin:0 auto; padding:0;}
 }
 
 #images{
-  width: 98%;
+  width: 100%;
   margin: 0 auto;
-  min-height:50px;
+  min-height:10%;
   display: block;
   white-space: nowrap;
   overflow-x: scroll;
@@ -23,6 +23,17 @@ body { margin:0 auto; padding:0;}
   height:50px;
   display:inline-block;
   border: 1px solid black;
+}
+
+
+#image-popup{
+  display:none;
+  width:400px;
+  height:600px;
+  position:fixed;
+  top: 100px;
+  left: 100px;
+  z-index: 1000;
 }
 
 
