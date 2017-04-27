@@ -53,12 +53,14 @@ var initialLoading = setInterval(function(){
   if(map.loaded()){
     clearInterval(initialLoading)
     // document.getElementById('blocker').style="display:none;"
-    console.log("Map loaded")
+    document.getElementById('loading-status').innerHTML = 'Loaded'
+    document.getElementById('loading-bar').className = "m6"
 
     //Fire it up...
     map.fire('moveend')
   }else{
-    console.log("Waiting on map...")
+    document.getElementById('loading-status').innerHTML = 'Loading map'
+    document.getElementById('loading-bar').className = "loading m6"
   }
 },1000)
 
@@ -86,7 +88,7 @@ document.getElementById('render-markers').addEventListener('change', function(e)
     console.log("Don't render markers")
     markerHandler.removeAllMarkers(map)
   }
-})
+});
 
 document.getElementById('show-geotagged-tweets').addEventListener('change', function(e){
   if (e.target.checked){
@@ -107,7 +109,7 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
       console.log(".")
     }
   },500)
-})
+});
 
 document.getElementById('show-polygon-tweets').addEventListener('change', function(e){
   if (e.target.checked){
@@ -124,17 +126,18 @@ document.getElementById('show-polygon-tweets').addEventListener('change', functi
       clearInterval(holdUp)
       map.fire('moveend')
     }else{
-      console.log(".")
+      document.getElementById('loading-status').innerHTML = 'Loading Tweets...'
+      document.getElementById('loading-bar').className = "loading m6"
     }
   },500)
-})
+});
 
 
 document.getElementById('images').addEventListener('scroll', function(){
   imageScroller.loadMore()
-})
+});
 
-map.on('load', function () {
+map.once('load', function () {
 
   //Add sources
   markerHandler.addSource(map)
@@ -156,22 +159,33 @@ map.on('load', function () {
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        console.log("Firing moveend")
+
+        document.getElementById('loading-status').innerHTML = "Loading Images..."
+
         var visibleFeatures = []
 
         if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
         visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
-
         visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
 
-        console.log("Calling image scroller with ", visibleFeatures.length)
+        imageScroller.working = true;
         imageScroller.renderTweets(visibleFeatures, map)
+
+        var imageHoldUp = setInterval(function(){
+          if (!imageScroller.working){
+            clearInterval(imageHoldUp)
+            document.getElementById('loading-bar').className = "m6"
+            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images`
+          }else{
+            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images...`
+            document.getElementById('loading-bar').className = "loading m6"
+          }
+        },100);
+
       }else{
-        console.log("move-end-waiting")
+        document.getElementById('loading-status').innerHTML = 'Loading Map...'
+        document.getElementById('loading-bar').className = "loading m6"
       }
     },500)
-
-
-
   })
-});
+})

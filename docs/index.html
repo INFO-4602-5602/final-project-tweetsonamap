@@ -20,10 +20,6 @@
 
 <body>
 
-  <!-- <div id="blocker" class="flex-parent flex-parent--center-main flex-parent--center-cross" style=" z-index:100; position:fixed; top:0; left:0; height:100%; width:100%; cursor:wait;">
-    <h1 class="loading m18"></h1>
-  </div> -->
-
   <header class='grid'>
     <div class="col--2"></div>
     <div class="col--8">
@@ -54,6 +50,9 @@
         Show any geo-located tweet
       </label>
 
+      <p class="ml6 mt12" id="loading-status">Status</p>
+      <h1 id="loading-bar"></h1>
+
     </div>
 
     <div id='map' class='col--10'></div>
@@ -63,20 +62,6 @@
     <ul id="images"></ul>
 
   </section>
-
-  <!-- <footer class="grid">
-    <div class="col--4">
-      <div id="image-settings" class='ml12'>
-        <input type="text"   class="input input--s txt-s w240" id="image_directory" placeholder="directory"
-          value="http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/"></input>
-        <input type="number" class="input input--s txt-s w48"  step="10" id="image_size"  placeholder="image size"  value=100></input>
-      </div>
-    </div>
-    <div class="col--4">
-      <p class="align-center">Info Vis &amp; Project EPIC 2017</p>
-    </div>
-    <div class="col--4"></div>
-  </footer> -->
 
 <script src="js/bundle.js"></script>
 

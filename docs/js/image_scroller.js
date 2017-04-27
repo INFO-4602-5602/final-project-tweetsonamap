@@ -5,6 +5,7 @@ module.exports = function(config){
   this.initial_load_size =  config.load_lim
   this.on         = true;
   this.extraTweets = []
+  this.working    = false;
 
   this.renderTweets = function(tweets, map){
 
@@ -24,7 +25,8 @@ module.exports = function(config){
     })
 
     this.extraTweets = tweets.slice(this.initial_load_size,tweets.length)
-
+    this.working = false;
+    document.getElementById('loading-bar').className = "m6"
   }
 
   /*
