@@ -2,6 +2,8 @@
 
 module.exports = function(config){
 
+    this.dataset = config.dataset
+
 
     this.createTimeline = function(){
     	console.log("Starting the timeline vis")
@@ -10,14 +12,11 @@ module.exports = function(config){
         var width = d3.select('#timeline').node().getBoundingClientRect().width - margin.left - margin.right; // Width of our visualization
         var height = 200 - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
-        
-        var dataset = "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/matthew_tweets_per_day.csv"
-        
+
         var parseDate = d3.time.format("%Y-%m-%d").parse;
 
-        d3.csv(dataset, function(csvData){
+        d3.csv(this.dataset, function(csvData){
             var data = csvData;
-
 
             data.forEach(function(d,idx){
                 d.date = parseDate(d["postedDate2"]);

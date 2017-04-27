@@ -2,6 +2,8 @@
 
 console.log("STARTING")
 
+var siteConfig     = require('../config.js')
+
 var util           = require('../lib/functions.js')
 var ImageHandler   = require('./image_maps.js')
 var MarkerHandler  = require('./image_markers.js')
@@ -11,14 +13,17 @@ var ImageScroller  = require('./image_scroller.js')
 var Timeline = require('./timeline.js')
 
 //Initialize the timeline
-var tweetTimeline = new Timeline()
+var tweetTimeline = new Timeline({
+  dataset : siteConfig.tweets_per_day
+})
+
 tweetTimeline.createTimeline()
 
 var markerHandler = new MarkerHandler({
   img_height: 100,
   img_width:  100,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson',
-  img_url:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
+  geojson:    siteConfig.markers,
+  img_url:    siteConfig.img_root,
   load_lim:   100,
   title:      'geotagged-point-images'
 })
@@ -26,7 +31,7 @@ var markerHandler = new MarkerHandler({
 var polygonHandler = new PolygonHandler({
   img_height: 150,
   img_width:  150,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-features.geojson',
+  geojson:    siteConfig.polygon_features,
   load_lim:   100,
   extension:  ".jpg"
 })
@@ -34,7 +39,7 @@ var polygonHandler = new PolygonHandler({
 var polyCentersHandler = new PolyCentersHandler({
   img_height: 150,
   img_width:  150,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-centers-no-tweets.geojson',
+  geojson:    siteConfig.polygon_centers,
   load_lim:   100
 })
 
