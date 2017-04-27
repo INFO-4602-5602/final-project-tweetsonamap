@@ -98,11 +98,11 @@ module.exports = function(config){
             'properties' : tweets[i]})
         }
         if (uniqueTweetIDs.length >= this.load_lim){
-          return [0 uniqueTweets]
+          return uniqueTweets
         }
       }
     }
-    return [0, uniqueTweets]
+    return uniqueTweets
   }
 
   this.polygonClick = function(e, map){
