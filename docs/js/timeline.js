@@ -7,7 +7,7 @@ module.exports = function(config){
     	console.log("Starting the timeline vis")
 
         var margin = {top: 10, right: 20, bottom: 70, left: 60}; // Margin around visualization
-        var width = 600 - margin.left - margin.right; // Width of our visualization
+        var width = d3.select('#timeline').node().getBoundingClientRect().width - margin.left - margin.right; // Width of our visualization
         var height = 200 - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
         
@@ -60,7 +60,6 @@ module.exports = function(config){
                             .attr("dx", "-.5em")
                             .attr("transform", "rotate(-45)")
                             .style("text-anchor", "end");
-            // console.log("X axis width:",d3.select('#xaxis').node().getBoundingClientRect().width)
 
             // // Update width of chart to accommodate long rotated x-axis labels
             // d3.select("#timelinesvg")
@@ -96,12 +95,12 @@ module.exports = function(config){
                 .attr("id", function(d) { return "bar-"+d.date; })
                 .attr("height", function(d) { return height-yScale(d.count); })
                 .attr("width", xScale.rangeBand())
-                .style("fill", "steelblue");
+                .style("fill", "lightsteelblue");
 
             // Add tooltip
             var tip = d3.tip()
                 .attr('class', 'd3-tip')
-                .offset([-10, 0])
+                .offset([0, 0])
                 .html(function(d) {
                     return "<span style='color:white'>"+d.date+"</br>"+d.count+" tweets</span>";
                 })
@@ -111,13 +110,13 @@ module.exports = function(config){
             // Prettier tooltip
             bar.on('mouseover', function(d){
                 tip.show(d);
-                // this.style = "fill:"+zayoTeal;
+                this.style = "fill:steelblue";
                 // d3.select(this).style("cursor", "pointer")
             })
 
             bar.on('mouseout', function(d){
                 tip.hide(d);
-                // this.style = "fill:"+zayoOrange;
+                this.style = "fill:lightsteelblue";
                 // d3.select(this).style("cursor", "default")
             });
 
