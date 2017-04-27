@@ -2,22 +2,20 @@
 
 console.log("STARTING")
 
-var siteConfig     = require('../config.js')
+var siteConfig         = require('../config.js')
 
-var util           = require('../lib/functions.js')
-var ImageHandler   = require('./image_maps.js')
-var MarkerHandler  = require('./image_markers.js')
-var PolygonHandler = require('./polygon_layers.js')
+var util               = require('../lib/functions.js')
+var ImageHandler       = require('./image_maps.js')
+var MarkerHandler      = require('./image_markers.js')
+var PolygonHandler     = require('./polygon_layers.js')
 var PolyCentersHandler = require('./polygon-centers_layer.js')
-var ImageScroller  = require('./image_scroller.js')
-var Timeline = require('./timeline.js')
+var ImageScroller      = require('./image_scroller.js')
+var Timeline           = require('./timeline.js')
 
 //Initialize the timeline
 var tweetTimeline = new Timeline({
   dataset : siteConfig.tweets_per_day
 })
-
-tweetTimeline.createTimeline()
 
 var markerHandler = new MarkerHandler({
   img_height: 100,
@@ -48,16 +46,18 @@ var imageScroller = new ImageScroller({
 })
 
 // Map!
-mapboxgl.accessToken = 'pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A';
+mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v9',
-    center: [-96, 37.8],
-    zoom: 3,
+    center: [-73.054, 18.429],
+    zoom: 6.5,
     minZoom: 2,
     hash:true
 });
+
+tweetTimeline.createTimeline(map)
 
 var initialLoading = setInterval(function(){
   if(map.loaded()){

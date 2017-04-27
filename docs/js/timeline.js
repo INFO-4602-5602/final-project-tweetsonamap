@@ -4,7 +4,7 @@ module.exports = function(config){
 
     this.dataset = config.dataset
 
-    this.createTimeline = function(){
+    this.createTimeline = function(map){
     	console.log("Starting the timeline vis")
 
         var margin = {top: 10, right: 10, bottom: 70, left: 60}; // Margin around visualization, including space for labels
@@ -175,17 +175,20 @@ module.exports = function(config){
 
             }
 
+            var timeFilters = []
+
             function brushend() {
 
-                var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
-                  localBrushYearEnd = (brush.empty()) ? brushYearEnd : Math.floor(yScale(b[1]));
+              var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
+                  localBrushYearEnd   = (brush.empty()) ? brushYearEnd : Math.floor(yScale(b[1]));
 
-                d3.selectAll("rect.bar").style("opacity", function(d, i) {
-                  return d.idx >= localBrushYearStart && d.idx <= localBrushYearEnd || brush.empty() ? "1" : ".4";
-                });
+              d3.selectAll("rect.bar").style("opacity", function(d, i) {
+                return d.idx >= localBrushYearStart && d.idx <= localBrushYearEnd || brush.empty() ? "1" : ".4";
+              });
 
-                console.log('local=', [localBrushYearStart,localBrushYearEnd])
-
+              //Add the filter to the map
+              map.setFilter('marker-layer',['all',[">=",'day',localBrushYearStart],["<=",'day',localBrushYearEnd]])
+              console.log('local=', [localBrushYearStart,localBrushYearEnd])
             }
 
             function resetBrush() {
