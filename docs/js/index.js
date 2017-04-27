@@ -167,9 +167,12 @@ map.once('load', function () {
         var visibleFeatures = []
 
         if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
-        visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
-        visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
+        var markerFeats = markerHandler.getVisibleFeatures(map)
+        var polyFeats   = polygonHandler.getVisibleFeatures(map)
+        visibleFeatures = visibleFeatures.concat( markerFeats[1] )
+        visibleFeatures = visibleFeatures.concat( polyFeats[1] )
 
+        var totalFeats = markerFeats[0] + polyFeats[0]
 
         imageScroller.renderTweets(visibleFeatures, map)
 
