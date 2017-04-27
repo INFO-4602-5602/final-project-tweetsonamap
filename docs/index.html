@@ -20,14 +20,23 @@
 
 <body>
 
-  <header>
+  <!-- <div id="blocker" class="flex-parent flex-parent--center-main flex-parent--center-cross" style=" z-index:100; position:fixed; top:0; left:0; height:100%; width:100%; cursor:wait;">
+    <h1 class="loading m18"></h1>
+  </div> -->
+
+  <header class='grid'>
+    <div class="col--2"></div>
+    <div class="col--8">
+      <h1>Timeline SVG Placeholder</h1>
+    </div>
+    <div class="col--2"></div>
   </header>
 
   <section class='grid'>
 
     <div class="col--1">
-      <button id='toggle-markers' class='btn'>Toggle Markers</button>
-      <button id='toggle-polygons' class='btn'>Toggle Polygons</button>
+      <button id='toggle-markers' class='btn btn--s'>Toggle Markers</button>
+      <button id='toggle-polygons' class='btn btn--s'>Toggle Polygons</button>
     </div>
 
     <div id='map' class='col--10'></div>
@@ -38,7 +47,7 @@
 
   </section>
 
-  <footer class="grid">
+  <!-- <footer class="grid">
     <div class="col--4">
       <div id="image-settings" class='ml12'>
         <input type="text"   class="input input--s txt-s w240" id="image_directory" placeholder="directory"
@@ -50,7 +59,7 @@
       <p class="align-center">Info Vis &amp; Project EPIC 2017</p>
     </div>
     <div class="col--4"></div>
-  </footer>
+  </footer> -->
 
 <script src="js/bundle.js"></script>
 
