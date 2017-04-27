@@ -155,12 +155,14 @@ map.once('load', function () {
 
   // The worker to control the images.  Needs to check EVERY layer
   map.on('moveend',function(){
+    imageScroller.working = true;
+    document.getElementById('loading-status').innerHTML = "Querying Map"
+    document.getElementById('loading-bar').className = "loading m6"
 
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
 
-        document.getElementById('loading-status').innerHTML = "Loading Images..."
 
         var visibleFeatures = []
 
@@ -168,7 +170,7 @@ map.once('load', function () {
         visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
         visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
 
-        imageScroller.working = true;
+
         imageScroller.renderTweets(visibleFeatures, map)
 
         var imageHoldUp = setInterval(function(){
@@ -178,7 +180,7 @@ map.once('load', function () {
             document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images`
           }else{
             document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images...`
-            document.getElementById('loading-bar').className = "loading m6"
+            //document.getElementById('loading-bar').className = "loading m6"
           }
         },100);
 
