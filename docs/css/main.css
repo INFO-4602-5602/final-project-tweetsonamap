@@ -74,3 +74,12 @@ body { margin:0 auto; padding:0;}
   top: 100%;
   left: 0;
 }
+
+
+.brush .extent {
+  stroke: #fff;
+  stroke-opacity: .6;
+  stroke-width: 2px;
+  fill-opacity: .1;
+  shape-rendering: crispEdges;
+}
