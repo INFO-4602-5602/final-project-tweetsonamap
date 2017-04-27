@@ -35,8 +35,25 @@
   <section class='grid'>
 
     <div class="col--1">
-      <button id='toggle-markers' class='btn btn--s'>Toggle Markers</button>
-      <button id='toggle-polygons' class='btn btn--s'>Toggle Polygons</button>
+
+      <label class='switch-container'>
+        <input type='checkbox' id='render-markers'/>
+        <div class='switch switch--pink switch--dot-yellow mr6'></div>
+        GeoTagged Images On Map
+      </label>
+
+      <label class='switch-container'>
+        <input type='checkbox' checked='checked' id='show-geotagged-tweets'/>
+        <div class='switch switch--pink switch--dot-yellow mr6'></div>
+        Show geotagged points
+      </label>
+
+      <label class='switch-container'>
+        <input type='checkbox' checked='checked' id='show-polygon-tweets'/>
+        <div class='switch switch--pink switch--dot-yellow mr6'></div>
+        Show any geo-located tweet
+      </label>
+
     </div>
 
     <div id='map' class='col--10'></div>

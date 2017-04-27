@@ -6,6 +6,7 @@ module.exports = function(config){
 
   this.img_height = config.img_height
   this.img_width  = config.img_width
+  this.img_url    = config.img_url
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
   this.on         = false;
@@ -49,7 +50,7 @@ module.exports = function(config){
 
     var markerDiv  = document.createElement('div')
         markerDiv.className = 'marker';
-        markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/${feature.properties.id}${this.extension}` + ')';
+        markerDiv.style.backgroundImage = 'url(' + `${this.img_url}/small/${feature.properties.id}.jpg` + ')';
         markerDiv.style.width  = this.img_width+'px';
         markerDiv.style.height = this.img_height+'px';
 
@@ -120,6 +121,15 @@ module.exports = function(config){
     prevFeatures = new Set(theseFeatures)
   }
 
+  this.removeAllMarkers = function(map){
+    var that = this
+    Object.keys(this.activeMarkers).forEach(function(id) {
+      that.activeMarkers[id].remove()
+      delete that.activeMarkers[id];
+    });
+    prevFeatures = new Set()
+  }
+
   this.resize = function(id){
     this.activeMarkers[id]._element.style.width = this.img_width+'px'
     this.activeMarkers[id]._element.style.height = this.img_width+'px'
@@ -131,15 +141,4 @@ module.exports = function(config){
     return htmlString
   }
 
-  this.remove = function(map){
-    if(this.on){
-      this.on = false;
-      var that = this;
-      Object.keys(that.activeMarkers).forEach(function(id){
-        that.activeMarkers[id].remove()
-        delete that.activeMarkers[id];
-      })
-      map.removeLayer('marker-layer')
-    }
-  }
 }
