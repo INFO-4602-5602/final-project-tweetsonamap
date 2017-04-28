@@ -1,4 +1,16 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = {
+ "web_root" : "/data/www/jennings/infovis",
+ "img_root" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images/",
+ "start_date" : "2016-9-25",
+ "mapboxAccessToken" : "pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A",
+ "markers" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson",
+ "polygon_features": "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-features.geojson",
+ "polygon_centers" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-centers-no-tweets.geojson",
+ "tweets_per_day"  : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/matthew_tweets_per_day.csv"
+}
+
+},{}],2:[function(require,module,exports){
 /*
 
   Functions to handle adding images to maps and scaling appropriately
@@ -56,7 +68,7 @@ module.exports = function(config){
   }
 }
 
-},{}],2:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 var util = require("../lib/functions.js")
 
 var popup = new mapboxgl.Popup()
@@ -65,7 +77,7 @@ module.exports = function(config){
 
   this.img_height = config.img_height
   this.img_width  = config.img_width
-  this.img_url    = config.img_url
+  this.img_dir    = config.img_url
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
   this.on         = false;
@@ -109,7 +121,8 @@ module.exports = function(config){
 
     var markerDiv  = document.createElement('div')
         markerDiv.className = 'marker';
-        markerDiv.style.backgroundImage = 'url(' + `${this.img_url}/small/${feature.properties.id}.jpg` + ')';
+        // markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}${this.extension}` + ')';
+        markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}` + '.jpg)';
         markerDiv.style.width  = this.img_width+'px';
         markerDiv.style.height = this.img_height+'px';
 
@@ -202,7 +215,7 @@ module.exports = function(config){
 
 }
 
-},{"../lib/functions.js":7}],3:[function(require,module,exports){
+},{"../lib/functions.js":9}],4:[function(require,module,exports){
 var util = require("../lib/functions.js")
 
 module.exports = function(config){
@@ -212,7 +225,9 @@ module.exports = function(config){
   this.extraTweets = []
   this.working    = false;
 
-  this.renderTweets = function(tweets, map){
+  this.img_root   = config.img_root
+
+  this.renderTweets = function(tweets, map, popup){
 
     //Clear the current list of images
     var list = document.getElementById('images')
@@ -224,7 +239,13 @@ module.exports = function(config){
         //li.innerHTML = `<p>Tweet:</p><p>${tweet.properties.id}</p>`
         li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
         li.addEventListener('click',function(){
-          that.tweetClicked(tweet, map)
+          that.tweetClicked(tweet, map, popup)
+        })
+        li.addEventListener('mouseenter',function(){
+          that.tweetMouseEnter(tweet, map, popup)
+        })
+        li.addEventListener('mouseleave',function(){
+          that.tweetMouseExit(tweet, map, popup)
         })
         list.appendChild(li)
     })
@@ -237,7 +258,7 @@ module.exports = function(config){
   /*
     This function will be called when the 'next' arrow is pressed to load more images for a given area
   */
-  this.loadMore = function(){
+  this.loadMore = function(map, popup){
     if(this.extraTweets.length){
       console.log("There are another " + this.extraTweets.length + " tweets to load")
 
@@ -248,7 +269,7 @@ module.exports = function(config){
           li.className = 'visible-image'
           li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
           li.addEventListener('click',function(){
-            that.tweetClicked(tweet, map)
+            that.tweetClicked(tweet, map, popup)
           })
         list.appendChild(li)
       })
@@ -258,29 +279,76 @@ module.exports = function(config){
     }
   }
 
-  this.tweetClicked = function(tweet, map){
+  this.tweetMouseEnter = function(tweet, map, popup){
+    if (tweet.geometry.type=="Point"){
+      //If the layer is already active, just update the data
+      if (map.getLayer('tweet-highlight-circle')){
+        map.getSource('tweet-highlight-circle-coords').setData(tweet.geometry)
+      }else{
+        //Layer does not exist, add the source and the layer
+        map.addSource('tweet-highlight-circle-coords',{
+          "type" : 'geojson',
+          "data" : tweet.geometry
+        })
+        map.addLayer({
+          id:   "tweet-highlight-circle",
+          type: "circle",
+          source: 'tweet-highlight-circle-coords',
+          "paint":{
+            "circle-color":'blue'
+          }
+        })
+      }
+
+    }
+  }
+
+
+  this.tweetMouseExit = function(tweet, map, popup){
+    console.log("LEAVING")
+  }
+
+  this.tweetClicked = function(tweet, map, popup){
+
+    var imagePopUp = document.getElementById('image-popup')
+      imagePopUp.style.display = 'block'
+      imagePopUp.innerHTML =`<div class='image-popup'>
+      <img src="${this.img_root}/medium/${tweet.properties.id}.jpg" />
+      <p>${tweet.properties.id}</p>
+      <p>${tweet.properties.text}</p>
+      <p>${tweet.properties.user}</p>
+   </div>`
+
     console.log(tweet.geometry, tweet.properties)
   }
 
 }
 
-},{"../lib/functions.js":7}],4:[function(require,module,exports){
+},{"../lib/functions.js":9}],5:[function(require,module,exports){
 'use strict';
 
 console.log("STARTING")
 
-var util           = require('../lib/functions.js')
-var ImageHandler   = require('./image_maps.js')
-var MarkerHandler  = require('./image_markers.js')
-var PolygonHandler = require('./polygon_layers.js')
+var siteConfig         = require('../config.js')
+
+var util               = require('../lib/functions.js')
+var ImageHandler       = require('./image_maps.js')
+var MarkerHandler      = require('./image_markers.js')
+var PolygonHandler     = require('./polygon_layers.js')
 var PolyCentersHandler = require('./polygon-centers_layer.js')
-var ImageScroller  = require('./image_scroller.js')
+var ImageScroller      = require('./image_scroller.js')
+var Timeline           = require('./timeline.js')
+
+//Initialize the timeline
+var tweetTimeline = new Timeline({
+  dataset : siteConfig.tweets_per_day
+})
 
 var markerHandler = new MarkerHandler({
   img_height: 100,
   img_width:  100,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson',
-  img_url:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
+  geojson:    siteConfig.markers,
+  img_url:    siteConfig.img_root,
   load_lim:   100,
   title:      'geotagged-point-images'
 })
@@ -288,7 +356,7 @@ var markerHandler = new MarkerHandler({
 var polygonHandler = new PolygonHandler({
   img_height: 150,
   img_width:  150,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-features.geojson',
+  geojson:    siteConfig.polygon_features,
   load_lim:   100,
   extension:  ".jpg"
 })
@@ -296,25 +364,28 @@ var polygonHandler = new PolygonHandler({
 var polyCentersHandler = new PolyCentersHandler({
   img_height: 150,
   img_width:  150,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-centers-no-tweets.geojson',
+  geojson:    siteConfig.polygon_centers,
   load_lim:   100
 })
 
 var imageScroller = new ImageScroller({
-  load_lim: 30
+  load_lim: 30,
+  img_root : siteConfig.img_root
 })
 
 // Map!
-mapboxgl.accessToken = 'pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A';
+mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v9',
-    center: [-96, 37.8],
-    zoom: 3,
+    center: [-73.054, 18.429],
+    zoom: 6.5,
     minZoom: 2,
     hash:true
 });
+
+tweetTimeline.createTimeline(map)
 
 var initialLoading = setInterval(function(){
   if(map.loaded()){
@@ -399,9 +470,10 @@ document.getElementById('show-polygon-tweets').addEventListener('change', functi
   },500)
 });
 
+var tweetPopUp = new mapboxgl.Popup({closeOnClick : 'true'})
 
 document.getElementById('images').addEventListener('scroll', function(){
-  imageScroller.loadMore()
+  imageScroller.loadMore(map, tweetPopUp)
 });
 
 map.once('load', function () {
@@ -421,6 +493,8 @@ map.once('load', function () {
   polyCentersHandler.addCirclesLayer(map)
 
   // The worker to control the images.  Needs to check EVERY layer
+
+
   map.on('moveend',function(){
     imageScroller.working = true;
     document.getElementById('loading-status').innerHTML = "Querying Map"
@@ -429,16 +503,18 @@ map.once('load', function () {
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-
-
+        
         var visibleFeatures = []
 
         if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
-        visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
-        visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
+        var markerFeats = markerHandler.getVisibleFeatures(map)
+        var polyFeats   = polygonHandler.getVisibleFeatures(map)
+        visibleFeatures = visibleFeatures.concat( markerFeats )
+        visibleFeatures = visibleFeatures.concat( polyFeats )
 
+        // var totalFeats = markerFeats[0] + polyFeats[0]
 
-        imageScroller.renderTweets(visibleFeatures, map)
+        imageScroller.renderTweets(visibleFeatures, map, tweetPopUp)
 
         var imageHoldUp = setInterval(function(){
           if (!imageScroller.working){
@@ -459,7 +535,7 @@ map.once('load', function () {
   })
 })
 
-},{"../lib/functions.js":7,"./image_maps.js":1,"./image_markers.js":2,"./image_scroller.js":3,"./polygon-centers_layer.js":5,"./polygon_layers.js":6}],5:[function(require,module,exports){
+},{"../config.js":1,"../lib/functions.js":9,"./image_maps.js":2,"./image_markers.js":3,"./image_scroller.js":4,"./polygon-centers_layer.js":6,"./polygon_layers.js":7,"./timeline.js":8}],6:[function(require,module,exports){
 var util = require("../lib/functions.js")
 
 var popup = new mapboxgl.Popup({})
@@ -589,7 +665,7 @@ module.exports = function(config){
   }
 }
 
-},{"../lib/functions.js":7}],6:[function(require,module,exports){
+},{"../lib/functions.js":9}],7:[function(require,module,exports){
 var util = require("../lib/functions.js")
 
 var popup = new mapboxgl.Popup({})
@@ -723,7 +799,219 @@ module.exports = function(config){
   }
 }
 
-},{"../lib/functions.js":7}],7:[function(require,module,exports){
+},{"../lib/functions.js":9}],8:[function(require,module,exports){
+/*  js for services */
+
+module.exports = function(config){
+
+    this.dataset = config.dataset
+
+    this.createTimeline = function(map){
+    	console.log("Starting the timeline vis")
+
+        var margin = {top: 10, right: 10, bottom: 40, left: 60}; // Margin around visualization, including space for labels
+        var width = d3.select('#timeline').node().getBoundingClientRect().width - margin.left - margin.right; // Width of our visualization
+        var height = 200 - margin.top - margin.bottom; // Height of our visualization
+        // var transDur = 100; // Transition time in ms
+
+        var parseDate = d3.time.format("%Y-%m-%d").parse;
+        var formatDate = d3.time.format("%a %b %d, %Y");
+
+
+        d3.csv(this.dataset, function(csvData){
+            var data = csvData;
+
+            data.forEach(function(d,idx){
+                d.date = parseDate(d["postedDate2"]);
+                d.count = +d["count"];
+                d.idx = idx;
+            });
+
+            var xScale = d3.scale.ordinal()
+                            .rangeRoundBands([0, width], .05)
+                            .domain(data.map(function(d) { return d.date; }));
+
+            var xScaleIdx = d3.scale.ordinal()
+                            .rangeRoundBands([0, width], .05)
+                            .domain(data.map(function(d) { return d.idx; }));
+
+            var yScale = d3.scale.linear()
+                            .range([height, 0])
+                            .domain([0, d3.max(data, function(d) { return parseFloat(d.count); })+1]);
+
+            var brushYearStart = d3.min(data, function(d) { return d.idx})
+            var brushYearEnd   = d3.max(data, function(d) { return d.idx})
+
+            // Create an SVG element to contain our visualization.
+            var svg = d3.select("#timeline").append("svg")
+                                            .attr("width", width+margin.left+margin.right)
+                                            .attr("height", height+margin.top+margin.bottom)
+                                            .attr("id","timelinesvg")
+                                          .append("g")
+                                            .attr("transform","translate(" + margin.left + "," + margin.right + ")");
+
+
+            // Build axes!
+            // Specify the axis scale and general position
+            var xAxis = d3.svg.axis()
+                              .scale(xScale)
+                              .ticks(5)
+                              .orient("bottom")
+                              .tickFormat(d3.time.format("%m/%d"))
+                              // .ticks(5);
+
+            var xAxisG = svg.append('g')
+                            .attr('class', 'axis')
+                            .attr('id','xaxis')
+                            .attr("transform", "translate(0," + height + ")")
+                            .call(xAxis)
+                          .selectAll("text")
+                            .attr("dy", ".35em")
+                            .attr("dx", "-.5em")
+                            .attr("transform", "rotate(-45)")
+                            .style("text-anchor", "end");
+
+            // // Update width of chart to accommodate long rotated x-axis labels
+            // d3.select("#timelinesvg")
+            //         .attr("width", d3.select('#timeline').node().getBoundingClientRect().width)
+
+            d3.select("#timelinesvg")
+                    .attr("height", d3.select('#timeline').node().getBoundingClientRect().height)
+
+            // Repeat for the y-axis
+            var yAxis = d3.svg.axis()
+                              .scale(yScale)
+                              .orient("left")
+                              .ticks(5);
+
+            var yAxisG = svg.append('g')
+                            .attr('class', 'axis')
+                            // .attr('transform', 'translate(' + xOffset + ', 0)')
+                            .call(yAxis);
+
+            var yLabel = svg.append("text")
+                            .attr('class', 'label')
+                            .attr("transform", "rotate(-90)")
+                            .attr('y',6)
+                            .attr('dy','.4em')
+                            .style("text-anchor", "end")
+                            .text("# Tweets");
+
+            // Build bar chart
+            var bar = svg.selectAll('.rect') // Select elements
+                        .data(data); // Bind data to elements
+
+            bar.enter().append("rect")
+                .attr("class", "rect")
+                .attr("x", function(d) { return xScale(d.date); })
+                .attr("y", function(d) { return yScale(d.count); })
+                .attr("id", function(d) { return "bar-"+d.date; })
+                .attr("height", function(d) { return height-yScale(d.count); })
+                .attr("width", xScale.rangeBand())
+                .style("fill", "lightsteelblue");
+
+            // Add tooltip
+            var tip = d3.tip()
+                .attr('class', 'd3-tip')
+                .offset([0, 0])
+                .html(function(d) {
+                    return "<span style='color:white'>"+formatDate(d.date)+"</br>"+d.count+" tweets</span>";
+                })
+
+            svg.call(tip);
+
+            // Prettier tooltip
+            bar.on('mouseover', function(d){
+                tip.show(d);
+                this.style = "fill:steelblue";
+                // d3.select(this).style("cursor", "pointer")
+            })
+
+            bar.on('mouseout', function(d){
+                tip.hide(d);
+                this.style = "fill:lightsteelblue";
+                // d3.select(this).style("cursor", "default")
+            });
+
+
+            // Brushing from http://bl.ocks.org/emeeks/8899a3e8c31d4c5e7cfd
+            // Draw brush
+            brush = d3.svg.brush()
+                .x(xScale)
+                .on("brush", brushmove)
+                .on("brushend", brushend);
+
+            var arc = d3.svg.arc()
+              .outerRadius(height / 20)
+              .startAngle(0)
+              .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
+
+            brushg = svg.append("g")
+              .attr("class", "brush")
+              .call(brush);
+
+            brushg.selectAll(".resize").append("path")
+                .attr("transform", "translate(0," +  height / 2 + ")")
+                .attr("d", arc);
+
+            brushg.selectAll("rect")
+                .attr("height", height);
+
+            // ****************************************
+            // Brush functions
+            // ****************************************
+
+            function brushmove() {
+                yScale.domain(xScaleIdx.range())
+                        .range(xScaleIdx.domain());
+                b = brush.extent();
+
+                var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
+                    localBrushYearEnd = (brush.empty()) ? brushYearEnd : Math.ceil(yScale(b[1]));
+
+                // Snap to rect edge
+                d3.select("g.brush").call((brush.empty()) ? brush.clear() : brush.extent([yScale.invert(localBrushYearStart), yScale.invert(localBrushYearEnd)]));
+
+                // Fade all years in the histogram not within the brush:
+                // for each bar, if index is within selected range, set opacity to 1
+                // else set opacity to .4
+                d3.selectAll("rect.rect").style("opacity", function(d, i) {
+                  return d.idx >= localBrushYearStart && d.idx < localBrushYearEnd || brush.empty() ? "1" : ".4";
+                });
+
+            }
+
+            var timeFilters = []
+
+            function brushend() {
+
+              var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
+                  localBrushYearEnd   = (brush.empty()) ? brushYearEnd : Math.floor(yScale(b[1]));
+
+              d3.selectAll("rect.bar").style("opacity", function(d, i) {
+                return d.idx >= localBrushYearStart && d.idx <= localBrushYearEnd || brush.empty() ? "1" : ".4";
+              });
+
+              //Add the filter to the map
+              map.setFilter('marker-layer',['all',[">=",'day',localBrushYearStart],["<=",'day',localBrushYearEnd]])
+              map.fire('moveend')
+              console.log('local=', [localBrushYearStart,localBrushYearEnd])
+            }
+
+            function resetBrush() {
+              brush
+                .clear()
+                .event(d3.select(".brush"));
+            }
+
+        }); //end d3.csv
+
+    } //end createTimeline
+
+
+} //end module.exports
+
+},{}],9:[function(require,module,exports){
 module.exports = {
   /* https://www.mapbox.com/mapbox-gl-js/example/filter-features-within-map-view/ */
   getUniqueFeatures: function(array, comparatorProperty) {
@@ -762,4 +1050,4 @@ module.exports = {
 
 }
 
-},{}]},{},[4]);
+},{}]},{},[5]);
