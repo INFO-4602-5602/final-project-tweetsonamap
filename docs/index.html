@@ -23,49 +23,48 @@
 
 <body>
 
-<<<<<<< HEAD
-  <div style="position:fixed;width:60%;left: 50%; transform: translateX(-50%);z-index:100; background-color:rgba(256,256,256,0.9);">
-    <div id="timeline" style=" ">
-    </div>
-=======
+
   <div id="timeline-parent">
     <div id="timeline"></div>
->>>>>>> d3
+  </div>
+
+  <div id="controlbox" class="round bg-white p6">
+    <label class='switch-container txt-s'>
+      <input type='checkbox' id='render-markers'/>
+      <div class='switch mr6'></div>
+      Show geotagged images on map
+    </label>
+
+    <label class='switch-container txt-s'>
+      <input type='checkbox' checked='checked' id='show-geotagged-tweets'/>
+      <div class='switch mr6'></div>
+      Show geotagged points
+    </label>
+
+    <label class='switch-container txt-s'>
+      <input type='checkbox' checked='checked' id='show-geolocated-tweets'/>
+      <div class='switch mr6'></div>
+      Show any geo-located tweet
+    </label>
+
+    <p class="ml6 mt12" id="loading-status">Status</p>
+    <h1 id="loading-bar"></h1>
+
   </div>
 
   <section class='grid'>
 
-    <div class="col--1">
+    <div id='map' class='col--9'></div>
 
-      <label class='switch-container'>
-        <input type='checkbox' id='render-markers'/>
-        <div class='switch switch--pink switch--dot-yellow mr6'></div>
-        GeoTagged Images On Map
-      </label>
+    <div class="col--3 flex-parent--column pl6">
 
-      <label class='switch-container'>
-        <input type='checkbox' checked='checked' id='show-geotagged-tweets'/>
-        <div class='switch switch--pink switch--dot-yellow mr6'></div>
-        Show geotagged points
-      </label>
+      <div id="image-popup-container" class="flex-child">
+        <div id="image-popup"></div>
+      </div>
 
-      <label class='switch-container'>
-        <input type='checkbox' checked='checked' id='show-geolocated-tweets'/>
-        <div class='switch switch--pink switch--dot-yellow mr6'></div>
-        Show any geo-located tweet
-      </label>
-
-      <p class="ml6 mt12" id="loading-status">Status</p>
-      <h1 id="loading-bar"></h1>
+      <ul id="images" class="flex-child"></ul>
 
     </div>
-
-    <div id="image-popup"></div>
-    <div id='map' class='col--10'></div>
-
-    <div class="col--1"></div>
-
-    <ul id="images"></ul>
 
   </section>
 

@@ -9,12 +9,8 @@ var GeoTaggedHandler   = require('./geotagged.js')
 var GeoLocatedHandler  = require('./geolocated.js')
 
 var ImageScroller      = require('./image_scroller.js')
-<<<<<<< HEAD
-var Timeline           = require('./timeline.js')
-=======
 
 var Timeline           = require('./timeline-d3v4.js')
->>>>>>> d3
 
 
 //Initialize the timeline
@@ -27,17 +23,17 @@ var geoTaggedHandler = new GeoTaggedHandler({
   img_width:  100,
   geojson:    siteConfig.markers,
   img_url:    siteConfig.img_root,
-  load_lim:   100,
+  load_lim:   200,
   title:      'geotagged-point-images'
 })
 
 var geoLocatedHandler = new GeoLocatedHandler({
   geojson:    siteConfig.polyon_features_as_points,
-  load_lim:   100
+  load_lim:   200
 })
 
 var imageScroller = new ImageScroller({
-  load_lim: 40,
+  load_lim: 80,
   img_root : siteConfig.img_root
 })
 

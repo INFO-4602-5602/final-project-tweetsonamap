@@ -1,7 +1,21 @@
 body {
   margin:0 auto;
   padding:0;}
-#map { height:90%; width:100%; }
+#map {
+  height:100%;
+  width:100%; }
+
+#controlbox{
+  display:block;
+  z-index:1000;
+  position: fixed;
+  left: 5px;
+  top: 5px;
+  width:120px;
+  height:400px;
+  background-color: rbgba();
+}
+
 .marker {
   display: block;
   border: none;
@@ -10,33 +24,35 @@ body {
   padding: 0;
 }
 
+/* Image sidebar */
 #images{
   width: 100%;
   margin: 0 auto;
-  min-height:10%;
+  max-height:50%;
   display: block;
-  /*white-space: nowrap;*/
   overflow-y: scroll;
+  /*white-space: nowrap;*/
 }
 
 .visible-image{
-  width:5%;
+  width:25%;
   height:10%;
+  border: 0.1em solid white;
   display:inline-block;
 }
 
 .visible-image:hover{
   cursor: pointer;
+  border: 0.1em solid blue;
+}
+
+#image-popup-container{
+  height:50%;
 }
 
 #image-popup{
   display:none;
-  width:400px;
-  height:600px;
-  position:fixed;
-  top: 100px;
-  left: 100px;
-  z-index: 1000;
+  max-height:50%;
 }
 
 
@@ -97,19 +113,15 @@ body {
   fill-opacity: .1;
   shape-rendering: crispEdges;
 }
-<<<<<<< HEAD
-=======
-
 
 /* Box containing timeline */
 #timeline-parent {
-  position:fixed; 
-  width:50%; 
-  height:30%; 
-  left: 50%; 
+  position:fixed;
+  width:50%;
+  height:30%;
+  left: 50%;
   transform: translateX(-50%);
-  z-index:100; 
-  background-color:rgba(250,250,250,0.8); 
+  z-index:100;
+  background-color:rgba(250,250,250,0.8);
   border-radius:8px
 }
->>>>>>> d3
