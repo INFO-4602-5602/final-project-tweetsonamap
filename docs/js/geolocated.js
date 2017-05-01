@@ -87,21 +87,11 @@ module.exports = function(config){
 
     var uniqueFeatures = util.getUniqueFeatures(features.slice(0,this.load_lim+25), 'id')
 
-    return [features.length, uniqueFeatures.slice(0,this.load_lim)]
-  }
-
-  this.polygonClick = function(e, map){
-    map.getCanvas().style.cursor = 'pointer';
-    //map.setFilter('polygon-fills-hover', ["==", "displayName", e.features[0].properties.displayName])
-    this.polyPopup.setLngLat(e.features[0].geometry.coordinates[0][1])
-        .setHTML(`<h4>Name: ${e.features[0].properties.displayName}</h4>
-          <h4>Area: ${e.features[0].properties.area}</h4>
-          <h4>Tweets: ${e.features[0].properties.count}</h4>`)
-        .addTo(map);
+    return [uniqueFeatures.length, uniqueFeatures.slice(0,this.load_lim)]
   }
 
   this.hide = function(map){
-    console.log("Turning it off?")
+    console.log("Turning off geolocated features")
     this.queryLayers.forEach(function(activeLayer){
       map.setLayoutProperty(activeLayer,'visibility','none')
     })
@@ -109,6 +99,7 @@ module.exports = function(config){
   }
 
   this.show = function(map){
+    console.log("Turnign on geolocated features")
     this.queryLayers.forEach(function(activeLayer){
       map.setLayoutProperty(activeLayer,'visibility','visible')
     })

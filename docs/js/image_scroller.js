@@ -9,7 +9,10 @@ module.exports = function(config){
 
   this.img_root   = config.img_root
 
+  //This is the powerhouse function: It takes a list of map features and adds them to the image list.
   this.renderTweets = function(tweets, map, popup){
+
+    console.log("Rendering Tweets: ",tweets.length)
 
     //Clear the current list of images
     var list = document.getElementById('images')
@@ -18,9 +21,7 @@ module.exports = function(config){
     tweets.slice(0,this.initial_load_size).forEach(function(tweet){
       var li = document.createElement('li')
         li.className = 'visible-image'
-        //li.innerHTML = `<p>Tweet:</p><p>${tweet.properties.id}</p>`
-        console.log(tweets.length)
-        console.log(tweet)
+
         li.style.backgroundImage = 'url(' + `${that.img_root}/small/${tweet.properties.id}.jpg` + ')';
         li.addEventListener('click',function(){
           that.tweetClicked(tweet, map, popup)
@@ -48,7 +49,7 @@ module.exports = function(config){
 
       var list = document.getElementById('images')
       var that = this;
-      this.extraTweets.slice(0,20).forEach(function(tweet){
+      this.extraTweets.slice(0,50).forEach(function(tweet){
         var li = document.createElement('li')
           li.className = 'visible-image'
           li.style.backgroundImage = 'url(' + `${that.img_root}/small/${tweet.properties.id}.jpg` + ')';

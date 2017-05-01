@@ -9,7 +9,6 @@ var GeoTaggedHandler   = require('./geotagged.js')
 var GeoLocatedHandler  = require('./geolocated.js')
 
 var ImageScroller      = require('./image_scroller.js')
-
 var Timeline           = require('./timeline-d3v4.js')
 
 

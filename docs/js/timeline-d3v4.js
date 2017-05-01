@@ -140,6 +140,7 @@ module.exports = function(config){
                 geoLocatedHandler.queryLayers.forEach(function(activeLayer){
                   map.setFilter(activeLayer,['all',[">=",'day',startDay],["<",'day',endDay]])
                 })
+                map.fire('moveend')
             }
         }); //end d3.csv
 

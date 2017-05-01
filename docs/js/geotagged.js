@@ -34,11 +34,11 @@ module.exports = function(config){
   this.getVisibleFeatures = function(map){
     if (map.getLayer('marker-layer')){
       var features = map.queryRenderedFeatures({layers: ['marker-layer']})
-      if (!features.length) return [] //If no features exist here, return empty array
+      if (!features.length) return [0,[]] //If no features exist here, return empty array
 
-      var uniqueFeatures = util.getUniqueGeometries(features).slice(0,this.load_lim); //Only ever take the load limit
+      var uniqueFeatures = util.getUniqueGeometries(features); //Only ever take the load limit
 
-      return [features.length, uniqueFeatures]
+      return [uniqueFeatures.length, uniqueFeatures.slice(0,this.load_lim)]
     }else{
       return [0,[]]
     }
