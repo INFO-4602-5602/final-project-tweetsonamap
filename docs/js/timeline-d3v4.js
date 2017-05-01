@@ -16,14 +16,18 @@ module.exports = function(config){
         var height = parent_height - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
 
-        var dataset = "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/matthew_tweets_per_day.csv"
+
 
         var parseDate  = d3.timeParse("%Y-%m-%d");
+        var parseDate2 = d3.timeParse("%Y-%-m-%d");
         var formatDate = d3.timeFormat("%a %b %d, %Y");
         var formatSimpleDate = d3.timeFormat("%b %-d")
 
+        this.dataset = config.dataset;
+        this.start_date = parseDate2(config.start_date); // Sun Sep 25 2016 00:00:00 GMT-0600 (MDT)
+        var that = this;
 
-        d3.csv(dataset, function(csvData){
+        d3.csv(this.dataset, function(csvData){
 
             // Parse data
             var data = csvData;
@@ -127,8 +131,7 @@ module.exports = function(config){
                     date1[1] = d3.timeDay.offset(date1[0]);
                 }
                 d3.select(this).transition().duration(300).call(d3.event.target.move, date1.map(xScale));
-                console.log("new date0",date0)
-                console.log("new date1",date1)
+                console.log([d3.timeDay.count(that.start_date,date1[0]),d3.timeDay.count(that.start_date,date1[1])])
             }
 
 
@@ -137,13 +140,14 @@ module.exports = function(config){
 
     } //end createTimeline
 
+    var that = this;
 
     window.onresize = function(event){
         console.log("resizing window")
         // Clear all svg
         // svg.selectAll("*").remove();
-        d3.select("timelinesvg").remove();
-        createTimeline();
+        d3.select("#timelinesvg").remove();
+        that.createTimeline();
     }
 
 
