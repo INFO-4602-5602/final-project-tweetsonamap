@@ -19,7 +19,7 @@ module.exports = function(config){
       var li = document.createElement('li')
         li.className = 'visible-image'
         //li.innerHTML = `<p>Tweet:</p><p>${tweet.properties.id}</p>`
-        li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
+        li.style.backgroundImage = 'url(' + `${that.img_root}/thumb/${tweet.properties.id}.jpg` + ')';
         li.addEventListener('click',function(){
           that.tweetClicked(tweet, map, popup)
         })
@@ -49,7 +49,7 @@ module.exports = function(config){
       this.extraTweets.slice(0,20).forEach(function(tweet){
         var li = document.createElement('li')
           li.className = 'visible-image'
-          li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
+          li.style.backgroundImage = 'url(' + `${that.img_root}/thumb/${tweet.properties.id}.jpg` + ')';
           li.addEventListener('click',function(){
             that.tweetClicked(tweet, map, popup)
           })

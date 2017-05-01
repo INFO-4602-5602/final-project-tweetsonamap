@@ -49,7 +49,7 @@ var polyPointsHandler = new PolyPointFeatures({
 })
 
 var imageScroller = new ImageScroller({
-  load_lim: 30,
+  load_lim: 40,
   img_root : siteConfig.img_root
 })
 
@@ -181,7 +181,7 @@ map.once('load', function () {
 
   //DEBUG:
   // hide polyCenters
-  // polyCentersHandler.hide(map)
+  polyCentersHandler.hide(map)
 
 
   // The worker to control the images.  Needs to check EVERY layer

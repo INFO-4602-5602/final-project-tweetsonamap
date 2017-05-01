@@ -1,4 +1,6 @@
-body { margin:0 auto; padding:0;}
+body {
+  margin:0 auto;
+  padding:0;}
 #map { height:90%; width:100%; }
 .marker {
   display: block;

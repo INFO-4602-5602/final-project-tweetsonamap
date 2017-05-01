@@ -49,15 +49,19 @@ module.exports = function(config){
     featureLevels.forEach(function(level){
 
       //these are the queryable layers
-      that.queryLayers.push(level.name + "-point-layer")
+      that.queryLayers.push(level.name + "-circle-layer")
 
       map.addLayer({
-        'id': level.name + "-point-layer",
+        'id': level.name + "-circle-layer",
         'type': "circle",
         'source': that.title,
         'paint':{
-          'circle-opacity':1,
-          'circle-color': 'salmon'
+          'circle-opacity':0.05,
+          'circle-color': 'green',
+          'circle-radius' : {
+            'property': 'area',
+            'stops' : [[0,4],[9999999,100]]
+          }
         },
         'filter': level.filter,
         'maxzoom': level.maxzoom,
@@ -84,25 +88,6 @@ module.exports = function(config){
     var uniqueFeatures = util.getUniqueFeatures(features.slice(0,this.load_lim+25), 'id')
 
     return uniqueFeatures.slice(0,this.load_lim)
-
-    //Loop through the features, find unique ids, exit if necessary.
-    // for (var f_idx=0; f_idx < features.length; f_idx++){
-    //   //Get the tweets array back from the original feature
-    //   var tweets = JSON.parse(features[f_idx].properties.tweets)
-    //   for(var i=0; i<tweets.length; i++){
-    //     //Check if we've seeen this tweet?
-    //     if(uniqueTweetIDs.indexOf(tweets[i].id) < 0){
-    //       uniqueTweetIDs.push(tweets[i].id)
-    //       uniqueTweets.push({
-    //         'geometry' : features[f_idx].geometry,
-    //         'properties' : tweets[i]})
-    //     }
-    //     if (uniqueTweetIDs.length >= this.load_lim){
-    //       return uniqueTweets
-    //     }
-    //   }
-    // }
-    // return uniqueTweets
   }
 
   this.polygonClick = function(e, map){
