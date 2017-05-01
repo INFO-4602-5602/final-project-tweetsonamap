@@ -12,6 +12,8 @@ var PolyCentersHandler = require('./polygon-centers_layer.js')
 var ImageScroller      = require('./image_scroller.js')
 var Timeline           = require('./timeline.js')
 
+var PolyPointFeatures  = fequire('./poly_as_points_layers.js')
+
 //Initialize the timeline
 var tweetTimeline = new Timeline({
   dataset : siteConfig.tweets_per_day
@@ -39,6 +41,11 @@ var polyCentersHandler = new PolyCentersHandler({
   img_width:  150,
   geojson:    siteConfig.polygon_centers,
   load_lim:   100
+})
+
+var polyPointsHandler = new PolyPointFeatures({
+  geojson:    siteConfig.polyon_features_as_points
+  load_lim:   100,
 })
 
 var imageScroller = new ImageScroller({
@@ -153,14 +160,18 @@ map.once('load', function () {
 
   //Add sources
   markerHandler.addSource(map)
-  polygonHandler.addSource(map)
+  // polygonHandler.addSource(map)
   polyCentersHandler.addSource(map)
+  polyPointsHandler.addSource(map)
 
   //Add the markers
   markerHandler.addMarkerLayer(map)
 
   //Add the Polygons
-  polygonHandler.addPolygonLayers(map)
+  // polygonHandler.addPolygonLayers(map)
+
+  //Add the Poly Points
+  polyPointsHandler.addPolyPoints(map)
 
   //Add the centers
   polyCentersHandler.addCirclesLayer(map)
@@ -176,12 +187,13 @@ map.once('load', function () {
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        
+
         var visibleFeatures = []
 
         if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
         var markerFeats = markerHandler.getVisibleFeatures(map)
-        var polyFeats   = polygonHandler.getVisibleFeatures(map)
+        // var polyFeats   = polygonHandler.getVisibleFeatures(map)
+        var polyFeats   = polyPointsHandler.getVisibleFeatures(map)
         visibleFeatures = visibleFeatures.concat( markerFeats )
         visibleFeatures = visibleFeatures.concat( polyFeats )
 
