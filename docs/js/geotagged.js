@@ -38,9 +38,9 @@ module.exports = function(config){
 
       var uniqueFeatures = util.getUniqueGeometries(features).slice(0,this.load_lim); //Only ever take the load limit
 
-      return uniqueFeatures
+      return [features.length, uniqueFeatures]
     }else{
-      return []
+      return [0,[]]
     }
   }
 

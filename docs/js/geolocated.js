@@ -80,14 +80,14 @@ module.exports = function(config){
 
   this.getVisibleFeatures = function(map){
     var features = map.queryRenderedFeatures( {layers:this.queryLayers} )
-    if (!features.length) return []
+    if (!features.length) return [0,[]]
 
     var uniqueTweetIDs = []
     var uniqueTweets = []
 
     var uniqueFeatures = util.getUniqueFeatures(features.slice(0,this.load_lim+25), 'id')
 
-    return uniqueFeatures.slice(0,this.load_lim)
+    return [features.length, uniqueFeatures.slice(0,this.load_lim)]
   }
 
   this.polygonClick = function(e, map){

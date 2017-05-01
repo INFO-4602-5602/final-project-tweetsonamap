@@ -18,7 +18,7 @@ var tweetTimeline = new Timeline({
   dataset : siteConfig.tweets_per_day
 })
 
-var geotaggeHandler = new GeoTaggedHandler({
+var geoTaggedHandler = new GeoTaggedHandler({
   img_height: 100,
   img_width:  100,
   geojson:    siteConfig.markers,
@@ -27,7 +27,7 @@ var geotaggeHandler = new GeoTaggedHandler({
   title:      'geotagged-point-images'
 })
 
-var geolocatedHandler = new GeoLocatedHandler({
+var geoLocatedHandler = new GeoLocatedHandler({
   geojson:    siteConfig.polyon_features_as_points,
   load_lim:   100
 })
@@ -81,14 +81,14 @@ document.getElementById('render-markers').addEventListener('change', function(e)
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        geotaggeHandler.renderMarkers(map)
+        geoTaggedHandler.renderMarkers(map)
       }else{
         console.log(".")
       }
     },500)
   }else{
     console.log("Don't render markers")
-    geotaggeHandler.removeAllMarkers(map)
+    geoTaggedHandler.removeAllMarkers(map)
   }
 });
 
@@ -100,7 +100,7 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
 
     if (document.getElementById('render-markers').checked){
       document.getElementById('render-markers').checked = null;
-      geotaggeHandler.removeAllMarkers(map)
+      geoTaggedHandler.removeAllMarkers(map)
     }
   }
   var holdUp = setInterval(function(){
@@ -116,12 +116,10 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
 document.getElementById('show-geolocated-tweets').addEventListener('change', function(e){
   if (e.target.checked){
     console.log("Polygons on")
-    polygonHandler.show(map)
-    polyCentersHandler.show(map)
+    geoLocatedHandler.show(map)
   }else{
     console.log("Turning polygons off")
-    polygonHandler.hide(map)
-    polyCentersHandler.hide(map)
+    geoLocatedHandler.hide(map)
   }
   var holdUp = setInterval(function(){
     if(map.loaded()){
@@ -143,14 +141,14 @@ document.getElementById('images').addEventListener('scroll', function(){
 map.once('load', function () {
 
   //Add sources
-  geotaggeHandler.addSource(map)
-  geolocatedHandler.addSource(map)
+  geoTaggedHandler.addSource(map)
+  geoLocatedHandler.addSource(map)
 
   //Add the markers
-  geotaggeHandler.addMarkerLayer(map)
+  geoTaggedHandler.addMarkerLayer(map)
 
   //Add the Poly Points
-  geolocatedHandler.addPolyPoints(map)
+  geoLocatedHandler.addPolyPoints(map)
 
 
   // The worker to control the images. Checks all layers
@@ -166,12 +164,15 @@ map.once('load', function () {
 
         var visibleFeatures = []
 
-        if (document.getElementById('render-markers').checked) geotaggeHandler.renderMarkers(map)
-        var markerFeats = geotaggeHandler.getVisibleFeatures(map)
-        // var polyFeats   = polygonHandler.getVisibleFeatures(map)
-        var polyFeats   = geolocatedHandler.getVisibleFeatures(map)
-        visibleFeatures = visibleFeatures.concat( markerFeats )
-        visibleFeatures = visibleFeatures.concat( polyFeats )
+        if (document.getElementById('render-markers').checked) geoTaggedHandler.renderMarkers(map)
+
+        var geoTagged = geoTaggedHandler.getVisibleFeatures(map)
+        var geoLocated = geoLocatedHandler.getVisibleFeatures(map)
+
+        visibleFeatures = visibleFeatures.concat( geoTagged[1] )
+        visibleFeatures = visibleFeatures.concat( geoLocated[1] )
+
+        var totalFeatures = geoTagged[0] + geoLocated[0]
 
         imageScroller.renderTweets(visibleFeatures, map, tweetPopUp)
 
@@ -179,9 +180,9 @@ map.once('load', function () {
           if (!imageScroller.working){
             clearInterval(imageHoldUp)
             document.getElementById('loading-bar').className = "m6"
-            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images`
+            document.getElementById('loading-status').innerHTML = `${totalFeatures} Images`
           }else{
-            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images...`
+            document.getElementById('loading-status').innerHTML = `${totalFeatures} Images...`
             //document.getElementById('loading-bar').className = "loading m6"
           }
         },100);
