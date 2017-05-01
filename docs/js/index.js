@@ -1,8 +1,7 @@
 'use strict';
 
-console.log("STARTING")
-
 var siteConfig         = require('../config.js')
+console.log("Site Configuration Loaded. Start date: "+siteConfig.start_date)
 
 var util               = require('../lib/functions.js')
 
@@ -41,27 +40,27 @@ var imageScroller = new ImageScroller({
 mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 
 var map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/light-v9',
-    center: [-73.054, 18.429],
-    zoom: 6.5,
-    minZoom: 2,
-    hash:true
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v9',
+  center: [-73.054, 18.429],
+  zoom: 6.5,
+  minZoom: 2,
+  hash:true
 });
 
+//Launch the timeline
 tweetTimeline.createTimeline(map)
 
 var initialLoading = setInterval(function(){
   if(map.loaded()){
     clearInterval(initialLoading)
-    // document.getElementById('blocker').style="display:none;"
     document.getElementById('loading-status').innerHTML = 'Loaded'
     document.getElementById('loading-bar').className = "m6"
 
     //Fire it up...
     map.fire('moveend')
   }else{
-    document.getElementById('loading-status').innerHTML = 'Loading map'
+    document.getElementById('loading-status').innerHTML = 'Loading Map'
     document.getElementById('loading-bar').className = "loading m6"
   }
 },1000)

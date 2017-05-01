@@ -15,9 +15,8 @@ body {
   margin: 0 auto;
   min-height:10%;
   display: block;
-  white-space: nowrap;
-  overflow-x: scroll;
-  overflow-y: hidden;
+  /*white-space: nowrap;*/
+  overflow-y: scroll;
 }
 
 .visible-image{
@@ -29,8 +28,6 @@ body {
 .visible-image:hover{
   cursor: pointer;
 }
-
-
 
 #image-popup{
   display:none;
