@@ -56,6 +56,12 @@ module.exports = function(config){
           li.addEventListener('click',function(){
             that.tweetClicked(tweet, map, popup)
           })
+          li.addEventListener('mouseenter',function(){
+            that.tweetMouseEnter(tweet, map, popup)
+          })
+          li.addEventListener('mouseleave',function(){
+            that.tweetMouseExit(tweet, map, popup)
+          })
         list.appendChild(li)
       })
       this.extraTweets = this.extraTweets.slice(20,this.extraTweets.length)
@@ -65,31 +71,40 @@ module.exports = function(config){
   }
 
   this.tweetMouseEnter = function(tweet, map, popup){
-    if (tweet.geometry.type=="Point"){
-      //If the layer is already active, just update the data
-      if (map.getLayer('tweet-highlight-circle')){
-        map.getSource('tweet-highlight-circle-coords').setData(tweet.geometry)
-      }else{
-        //Layer does not exist, add the source and the layer
-        map.addSource('tweet-highlight-circle-coords',{
-          "type" : 'geojson',
-          "data" : tweet.geometry
-        })
-        map.addLayer({
-          id:   "tweet-highlight-circle",
-          type: "circle",
-          source: 'tweet-highlight-circle-coords',
-          "paint":{
-            "circle-color":'blue'
-          }
-        })
-      }
+    //If the layer is already active, just update the data
+    var r = 10;
+    if (tweet.properties.hasOwnProperty('area')){
+      r = Math.log(tweet.properties.area) * (map.getZoom())
     }
+    if (map.getLayer('tweet-highlight-circle')){
+      map.getSource('tweet-highlight-circle-coords').setData(tweet.geometry)
+      map.setPaintProperty('tweet-highlight-circle','circle-radius',r)
+      map.setLayoutProperty('tweet-highlight-circle','visibility','visible')
+    }else{
+      //Layer does not exist, add the source and the layer
+      map.addSource('tweet-highlight-circle-coords',{
+        "type" : 'geojson',
+        "data" : tweet.geometry
+      })
+      map.addLayer({
+        id:   "tweet-highlight-circle",
+        type: "circle",
+        source: 'tweet-highlight-circle-coords',
+        "paint":{
+          "circle-color":'salmon',
+          "circle-radius" : r,
+          "circle-opacity": 0.8
+        }
+      })
+    }
+
   }
 
 
   this.tweetMouseExit = function(tweet, map, popup){
-    console.log("LEAVING")
+    if (map.getLayer('tweet-highlight-circle')){
+      map.setLayoutProperty('tweet-highlight-circle','visibility','none')
+    }
   }
 
   this.tweetClicked = function(tweet, map, popup){
