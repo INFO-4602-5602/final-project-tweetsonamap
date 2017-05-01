@@ -10,7 +10,7 @@ var PolyCentersHandler = require('./polygon-centers_layer.js')
 var ImageScroller  = require('./image_scroller.js')
 
 
-var Timeline = require('./timeline.js')
+var Timeline = require('./timeline-d3v4.js')
 
 var tweetTimeline = new Timeline()
 tweetTimeline.createTimeline()
