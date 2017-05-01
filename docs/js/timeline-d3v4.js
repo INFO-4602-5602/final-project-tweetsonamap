@@ -15,9 +15,9 @@ module.exports = function(config){
         var width  = parent_width - margin.left - margin.right; // Width of our visualization
         var height = parent_height - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
-        
+
         var dataset = "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/matthew_tweets_per_day.csv"
-        
+
         var parseDate  = d3.timeParse("%Y-%m-%d");
         var formatDate = d3.timeFormat("%a %b %d, %Y");
         var formatSimpleDate = d3.timeFormat("%b %-d")
@@ -44,7 +44,7 @@ module.exports = function(config){
                             .rangeRound([0, width])
                             .domain([new Date(data[0].date),
                                 d3.timeDay.offset(new Date(data[data.length-1].date),1)])
-            
+
             var yScale = d3.scaleLinear()
                             .range([height, 0])
                             .domain([0, d3.max(data, function(d) { return parseFloat(d.count); })+1]);

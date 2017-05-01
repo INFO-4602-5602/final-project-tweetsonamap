@@ -1,72 +1,67 @@
 'use strict';
 
-console.log("STARTING")
+var siteConfig         = require('../config.js')
+console.log("Site Configuration Loaded. Start date: "+siteConfig.start_date)
 
-var util           = require('../lib/functions.js')
-var ImageHandler   = require('./image_maps.js')
-var MarkerHandler  = require('./image_markers.js')
-var PolygonHandler = require('./polygon_layers.js')
-var PolyCentersHandler = require('./polygon-centers_layer.js')
-var ImageScroller  = require('./image_scroller.js')
+var util               = require('../lib/functions.js')
 
+var GeoTaggedHandler   = require('./geotagged.js')
+var GeoLocatedHandler  = require('./geolocated.js')
 
-var Timeline = require('./timeline-d3v4.js')
+var ImageScroller      = require('./image_scroller.js')
+
+var Timeline           = require('./timeline-d3v4.js')
+
 
 //Initialize the timeline
-var tweetTimeline = new Timeline()
-tweetTimeline.createTimeline()
+var tweetTimeline = new Timeline({
+  dataset : siteConfig.tweets_per_day
+})
 
-var markerHandler = new MarkerHandler({
+var geoTaggedHandler = new GeoTaggedHandler({
   img_height: 100,
   img_width:  100,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson',
-  img_url:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images',
+  geojson:    siteConfig.markers,
+  img_url:    siteConfig.img_root,
   load_lim:   100,
   title:      'geotagged-point-images'
 })
 
-var polygonHandler = new PolygonHandler({
-  img_height: 150,
-  img_width:  150,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-features.geojson',
-  load_lim:   100,
-  extension:  ".jpg"
-})
-
-var polyCentersHandler = new PolyCentersHandler({
-  img_height: 150,
-  img_width:  150,
-  geojson:    'http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-centers-no-tweets.geojson',
+var geoLocatedHandler = new GeoLocatedHandler({
+  geojson:    siteConfig.polyon_features_as_points,
   load_lim:   100
 })
 
 var imageScroller = new ImageScroller({
-  load_lim: 30
+  load_lim: 40,
+  img_root : siteConfig.img_root
 })
 
 // Map!
-mapboxgl.accessToken = 'pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A';
+mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 
 var map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/light-v9',
-    center: [-96, 37.8],
-    zoom: 3,
-    minZoom: 2,
-    hash:true
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v9',
+  center: [-73.054, 18.429],
+  zoom: 6.5,
+  minZoom: 2,
+  hash:true
 });
+
+//Launch the timeline
+tweetTimeline.createTimeline(map)
 
 var initialLoading = setInterval(function(){
   if(map.loaded()){
     clearInterval(initialLoading)
-    // document.getElementById('blocker').style="display:none;"
     document.getElementById('loading-status').innerHTML = 'Loaded'
     document.getElementById('loading-bar').className = "m6"
 
     //Fire it up...
     map.fire('moveend')
   }else{
-    document.getElementById('loading-status').innerHTML = 'Loading map'
+    document.getElementById('loading-status').innerHTML = 'Loading Map'
     document.getElementById('loading-bar').className = "loading m6"
   }
 },1000)
@@ -86,14 +81,14 @@ document.getElementById('render-markers').addEventListener('change', function(e)
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        markerHandler.renderMarkers(map)
+        geoTaggedHandler.renderMarkers(map)
       }else{
         console.log(".")
       }
     },500)
   }else{
     console.log("Don't render markers")
-    markerHandler.removeAllMarkers(map)
+    geoTaggedHandler.removeAllMarkers(map)
   }
 });
 
@@ -105,7 +100,7 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
 
     if (document.getElementById('render-markers').checked){
       document.getElementById('render-markers').checked = null;
-      markerHandler.removeAllMarkers(map)
+      geoTaggedHandler.removeAllMarkers(map)
     }
   }
   var holdUp = setInterval(function(){
@@ -118,15 +113,13 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
   },500)
 });
 
-document.getElementById('show-polygon-tweets').addEventListener('change', function(e){
+document.getElementById('show-geolocated-tweets').addEventListener('change', function(e){
   if (e.target.checked){
     console.log("Polygons on")
-    polygonHandler.show(map)
-    polyCentersHandler.show(map)
+    geoLocatedHandler.show(map)
   }else{
     console.log("Turning polygons off")
-    polygonHandler.hide(map)
-    polyCentersHandler.hide(map)
+    geoLocatedHandler.hide(map)
   }
   var holdUp = setInterval(function(){
     if(map.loaded()){
@@ -139,28 +132,27 @@ document.getElementById('show-polygon-tweets').addEventListener('change', functi
   },500)
 });
 
+var tweetPopUp = new mapboxgl.Popup({closeOnClick : 'true'})
 
 document.getElementById('images').addEventListener('scroll', function(){
-  imageScroller.loadMore()
+  imageScroller.loadMore(map, tweetPopUp)
 });
 
 map.once('load', function () {
 
   //Add sources
-  markerHandler.addSource(map)
-  polygonHandler.addSource(map)
-  polyCentersHandler.addSource(map)
+  geoTaggedHandler.addSource(map)
+  geoLocatedHandler.addSource(map)
 
   //Add the markers
-  markerHandler.addMarkerLayer(map)
+  geoTaggedHandler.addMarkerLayer(map)
 
-  //Add the Polygons
-  polygonHandler.addPolygonLayers(map)
+  //Add the Poly Points
+  geoLocatedHandler.addPolyPoints(map)
 
-  //Add the centers
-  polyCentersHandler.addCirclesLayer(map)
 
-  // The worker to control the images.  Needs to check EVERY layer
+  // The worker to control the images. Checks all layers
+
   map.on('moveend',function(){
     imageScroller.working = true;
     document.getElementById('loading-status').innerHTML = "Querying Map"
@@ -170,23 +162,27 @@ map.once('load', function () {
       if(map.loaded()){
         clearInterval(holdUp)
 
-
         var visibleFeatures = []
 
-        if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
-        visibleFeatures = visibleFeatures.concat( markerHandler.getVisibleFeatures(map) )
-        visibleFeatures = visibleFeatures.concat( polygonHandler.getVisibleFeatures(map) )
+        if (document.getElementById('render-markers').checked) geoTaggedHandler.renderMarkers(map)
 
+        var geoTagged = geoTaggedHandler.getVisibleFeatures(map)
+        var geoLocated = geoLocatedHandler.getVisibleFeatures(map)
 
-        imageScroller.renderTweets(visibleFeatures, map)
+        visibleFeatures = visibleFeatures.concat( geoTagged[1] )
+        visibleFeatures = visibleFeatures.concat( geoLocated[1] )
+
+        var totalFeatures = geoTagged[0] + geoLocated[0]
+
+        imageScroller.renderTweets(visibleFeatures, map, tweetPopUp)
 
         var imageHoldUp = setInterval(function(){
           if (!imageScroller.working){
             clearInterval(imageHoldUp)
             document.getElementById('loading-bar').className = "m6"
-            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images`
+            document.getElementById('loading-status').innerHTML = `${totalFeatures} Images`
           }else{
-            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images...`
+            document.getElementById('loading-status').innerHTML = `${totalFeatures} Images...`
             //document.getElementById('loading-bar').className = "loading m6"
           }
         },100);
