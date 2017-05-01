@@ -13,7 +13,7 @@ body {
   top: 5px;
   width:120px;
   height:400px;
-  background-color: rbgba();
+  background-color:rgba(250,250,250,0.8);
 }
 
 .marker {
@@ -36,9 +36,11 @@ body {
 
 .visible-image{
   width:25%;
-  height:10%;
+  /*height:15%;*/
+  height:100px;
   border: 0.1em solid white;
   display:inline-block;
+  background-repeat: no-repeat;
 }
 
 .visible-image:hover{
@@ -118,9 +120,11 @@ body {
 #timeline-parent {
   position:fixed;
   width:50%;
-  height:30%;
-  left: 50%;
-  transform: translateX(-50%);
+  height:15%;
+  left: 160px;
+  top: 5px;
+  /*left: 50%;*/
+  /*transform: translateX(-50%);*/
   z-index:100;
   background-color:rgba(250,250,250,0.8);
   border-radius:8px
