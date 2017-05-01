@@ -2,7 +2,7 @@
 
 module.exports = function(config){
 
-    this.createTimeline = function(){
+    this.createTimeline = function(map,geoLocatedHandler){
         // Clear all svg
 
 
@@ -131,10 +131,16 @@ module.exports = function(config){
                     date1[1] = d3.timeDay.offset(date1[0]);
                 }
                 d3.select(this).transition().duration(300).call(d3.event.target.move, date1.map(xScale));
-                console.log([d3.timeDay.count(that.start_date,date1[0]),d3.timeDay.count(that.start_date,date1[1])])
+
+                var startDay = d3.timeDay.count(that.start_date,date1[0])
+                var endDay   = d3.timeDay.count(that.start_date,date1[1])
+
+                //Set filters for the map
+                map.setFilter('marker-layer',['all',[">=",'day',startDay],["<",'day',endDay]])
+                geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+                  map.setFilter(activeLayer,['all',[">=",'day',startDay],["<",'day',endDay]])
+                })
             }
-
-
         }); //end d3.csv
 
 
@@ -142,13 +148,26 @@ module.exports = function(config){
 
     var that = this;
 
-    window.onresize = function(event){
-        console.log("resizing window")
-        // Clear all svg
-        // svg.selectAll("*").remove();
-        d3.select("#timelinesvg").remove();
-        that.createTimeline();
-    }
+    var rtime;
+    var timeout = false;
+    var delta = 200;
+    window.onresize = function(event) {
+       rtime = new Date();
+       if (timeout === false) {
+           timeout = true;
+           setTimeout(resizeend, delta);
+       }
+    };
 
+    function resizeend() {
+       if (new Date() - rtime < delta) {
+           setTimeout(resizeend, delta);
+       } else {
+           timeout = false;
+           console.log('Done resizing');
+           d3.select("#timelinesvg").remove();
+           that.createTimeline();
+       }
+    }
 
 } //end module.exports

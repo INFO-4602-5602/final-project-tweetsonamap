@@ -19,6 +19,8 @@ module.exports = function(config){
       var li = document.createElement('li')
         li.className = 'visible-image'
         //li.innerHTML = `<p>Tweet:</p><p>${tweet.properties.id}</p>`
+        console.log(tweets.length)
+        console.log(tweet)
         li.style.backgroundImage = 'url(' + `${that.img_root}/small/${tweet.properties.id}.jpg` + ')';
         li.addEventListener('click',function(){
           that.tweetClicked(tweet, map, popup)

@@ -51,7 +51,7 @@ var map = new mapboxgl.Map({
 });
 
 //Launch the timeline
-tweetTimeline.createTimeline(map)
+tweetTimeline.createTimeline(map, geoLocatedHandler)
 
 var initialLoading = setInterval(function(){
   if(map.loaded()){
