@@ -73,7 +73,7 @@ module.exports = function(config){
                           .selectAll("text")
                             .attr("dy", ".35em")
                             .attr("dx", "-.5em")
-                            .attr("transform", "rotate(-45)")
+                            .attr("transform", "translate(10,0) rotate(-45)")
                             .style("text-anchor", "end");
 
             // // Update width of chart to accommodate long rotated x-axis labels
