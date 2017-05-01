@@ -28,10 +28,6 @@ var featureLevels = [
 
 module.exports = function(config){
 
-  this.img_height = config.img_height
-  this.img_width  = config.img_width
-  this.img_dir    = config.img_dir
-  this.extension  = config.extension
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
   this.title      = 'geolocated-tweets'
@@ -46,22 +42,22 @@ module.exports = function(config){
     })
   }
 
-  this.addPolygonLayers = function(map){
+  this.addPolyPoints = function(map){
     this.on=true;
     var that = this;
 
     featureLevels.forEach(function(level){
 
       //these are the queryable layers
-      that.queryLayers.push(level.name + "-fill-layer")
+      that.queryLayers.push(level.name + "-point-layer")
 
       map.addLayer({
-        'id': level.name + "-fill-layer",
-        'type': "fill",
-        'source': 'polygon-tweets',
+        'id': level.name + "-point-layer",
+        'type': "circle",
+        'source': that.title,
         'paint':{
-          'fill-opacity':0,
-          'fill-color': 'salmon'
+          'circle-opacity':1,
+          'circle-color': 'salmon'
         },
         'filter': level.filter,
         'maxzoom': level.maxzoom,
@@ -72,7 +68,7 @@ module.exports = function(config){
     var that = this;
     that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
     featureLevels.forEach(function(layer){
-      map.on('click',layer.name+"-fill-layer",function(e){
+      map.on('click',layer.name+"-circle-layer",function(e){
         that.polygonClick(e, map)
       })
     });
@@ -85,24 +81,28 @@ module.exports = function(config){
     var uniqueTweetIDs = []
     var uniqueTweets = []
 
+    var uniqueFeatures = util.getUniqueFeatures(features.slice(0,this.load_lim+25), 'id')
+
+    return uniqueFeatures.slice(0,this.load_lim)
+
     //Loop through the features, find unique ids, exit if necessary.
-    for (var f_idx=0; f_idx < features.length; f_idx++){
-      //Get the tweets array back from the original feature
-      var tweets = JSON.parse(features[f_idx].properties.tweets)
-      for(var i=0; i<tweets.length; i++){
-        //Check if we've seeen this tweet?
-        if(uniqueTweetIDs.indexOf(tweets[i].id) < 0){
-          uniqueTweetIDs.push(tweets[i].id)
-          uniqueTweets.push({
-            'geometry' : features[f_idx].geometry,
-            'properties' : tweets[i]})
-        }
-        if (uniqueTweetIDs.length >= this.load_lim){
-          return uniqueTweets
-        }
-      }
-    }
-    return uniqueTweets
+    // for (var f_idx=0; f_idx < features.length; f_idx++){
+    //   //Get the tweets array back from the original feature
+    //   var tweets = JSON.parse(features[f_idx].properties.tweets)
+    //   for(var i=0; i<tweets.length; i++){
+    //     //Check if we've seeen this tweet?
+    //     if(uniqueTweetIDs.indexOf(tweets[i].id) < 0){
+    //       uniqueTweetIDs.push(tweets[i].id)
+    //       uniqueTweets.push({
+    //         'geometry' : features[f_idx].geometry,
+    //         'properties' : tweets[i]})
+    //     }
+    //     if (uniqueTweetIDs.length >= this.load_lim){
+    //       return uniqueTweets
+    //     }
+    //   }
+    // }
+    // return uniqueTweets
   }
 
   this.polygonClick = function(e, map){

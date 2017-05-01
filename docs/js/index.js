@@ -12,7 +12,7 @@ var PolyCentersHandler = require('./polygon-centers_layer.js')
 var ImageScroller      = require('./image_scroller.js')
 var Timeline           = require('./timeline.js')
 
-var PolyPointFeatures  = fequire('./poly_as_points_layers.js')
+var PolyPointFeatures  = require('./poly_as_points_layers.js')
 
 //Initialize the timeline
 var tweetTimeline = new Timeline({
@@ -44,8 +44,8 @@ var polyCentersHandler = new PolyCentersHandler({
 })
 
 var polyPointsHandler = new PolyPointFeatures({
-  geojson:    siteConfig.polyon_features_as_points
-  load_lim:   100,
+  geojson:    siteConfig.polyon_features_as_points,
+  load_lim:   100
 })
 
 var imageScroller = new ImageScroller({
@@ -166,6 +166,9 @@ map.once('load', function () {
 
   //Add the markers
   markerHandler.addMarkerLayer(map)
+  //DEBUG:
+  // hide marker layer
+  map.setLayoutProperty('marker-layer', 'visibility', 'none')
 
   //Add the Polygons
   // polygonHandler.addPolygonLayers(map)
@@ -175,6 +178,11 @@ map.once('load', function () {
 
   //Add the centers
   polyCentersHandler.addCirclesLayer(map)
+
+  //DEBUG:
+  // hide polyCenters
+  // polyCentersHandler.hide(map)
+
 
   // The worker to control the images.  Needs to check EVERY layer
 
