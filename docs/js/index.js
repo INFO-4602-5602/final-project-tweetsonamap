@@ -5,21 +5,20 @@ console.log("STARTING")
 var siteConfig         = require('../config.js')
 
 var util               = require('../lib/functions.js')
-var ImageHandler       = require('./image_maps.js')
-var MarkerHandler      = require('./image_markers.js')
-var PolygonHandler     = require('./polygon_layers.js')
-var PolyCentersHandler = require('./polygon-centers_layer.js')
+
+var GeoTaggedHandler   = require('./geotagged.js')
+var GeoLocatedHandler  = require('./geolocated.js')
+
 var ImageScroller      = require('./image_scroller.js')
 var Timeline           = require('./timeline.js')
 
-var PolyPointFeatures  = require('./poly_as_points_layers.js')
 
 //Initialize the timeline
 var tweetTimeline = new Timeline({
   dataset : siteConfig.tweets_per_day
 })
 
-var markerHandler = new MarkerHandler({
+var geotaggeHandler = new GeoTaggedHandler({
   img_height: 100,
   img_width:  100,
   geojson:    siteConfig.markers,
@@ -28,22 +27,7 @@ var markerHandler = new MarkerHandler({
   title:      'geotagged-point-images'
 })
 
-var polygonHandler = new PolygonHandler({
-  img_height: 150,
-  img_width:  150,
-  geojson:    siteConfig.polygon_features,
-  load_lim:   100,
-  extension:  ".jpg"
-})
-
-var polyCentersHandler = new PolyCentersHandler({
-  img_height: 150,
-  img_width:  150,
-  geojson:    siteConfig.polygon_centers,
-  load_lim:   100
-})
-
-var polyPointsHandler = new PolyPointFeatures({
+var geolocatedHandler = new GeoLocatedHandler({
   geojson:    siteConfig.polyon_features_as_points,
   load_lim:   100
 })
@@ -97,14 +81,14 @@ document.getElementById('render-markers').addEventListener('change', function(e)
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        markerHandler.renderMarkers(map)
+        geotaggeHandler.renderMarkers(map)
       }else{
         console.log(".")
       }
     },500)
   }else{
     console.log("Don't render markers")
-    markerHandler.removeAllMarkers(map)
+    geotaggeHandler.removeAllMarkers(map)
   }
 });
 
@@ -116,7 +100,7 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
 
     if (document.getElementById('render-markers').checked){
       document.getElementById('render-markers').checked = null;
-      markerHandler.removeAllMarkers(map)
+      geotaggeHandler.removeAllMarkers(map)
     }
   }
   var holdUp = setInterval(function(){
@@ -129,7 +113,7 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
   },500)
 });
 
-document.getElementById('show-polygon-tweets').addEventListener('change', function(e){
+document.getElementById('show-geolocated-tweets').addEventListener('change', function(e){
   if (e.target.checked){
     console.log("Polygons on")
     polygonHandler.show(map)
@@ -159,33 +143,17 @@ document.getElementById('images').addEventListener('scroll', function(){
 map.once('load', function () {
 
   //Add sources
-  markerHandler.addSource(map)
-  // polygonHandler.addSource(map)
-  polyCentersHandler.addSource(map)
-  polyPointsHandler.addSource(map)
+  geotaggeHandler.addSource(map)
+  geolocatedHandler.addSource(map)
 
   //Add the markers
-  markerHandler.addMarkerLayer(map)
-  //DEBUG:
-  // hide marker layer
-  map.setLayoutProperty('marker-layer', 'visibility', 'none')
-
-  //Add the Polygons
-  // polygonHandler.addPolygonLayers(map)
+  geotaggeHandler.addMarkerLayer(map)
 
   //Add the Poly Points
-  polyPointsHandler.addPolyPoints(map)
-
-  //Add the centers
-  polyCentersHandler.addCirclesLayer(map)
-
-  //DEBUG:
-  // hide polyCenters
-  polyCentersHandler.hide(map)
+  geolocatedHandler.addPolyPoints(map)
 
 
-  // The worker to control the images.  Needs to check EVERY layer
-
+  // The worker to control the images. Checks all layers
 
   map.on('moveend',function(){
     imageScroller.working = true;
@@ -198,14 +166,12 @@ map.once('load', function () {
 
         var visibleFeatures = []
 
-        if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
-        var markerFeats = markerHandler.getVisibleFeatures(map)
+        if (document.getElementById('render-markers').checked) geotaggeHandler.renderMarkers(map)
+        var markerFeats = geotaggeHandler.getVisibleFeatures(map)
         // var polyFeats   = polygonHandler.getVisibleFeatures(map)
-        var polyFeats   = polyPointsHandler.getVisibleFeatures(map)
+        var polyFeats   = geolocatedHandler.getVisibleFeatures(map)
         visibleFeatures = visibleFeatures.concat( markerFeats )
         visibleFeatures = visibleFeatures.concat( polyFeats )
-
-        // var totalFeats = markerFeats[0] + polyFeats[0]
 
         imageScroller.renderTweets(visibleFeatures, map, tweetPopUp)
 

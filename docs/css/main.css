@@ -27,6 +27,11 @@ body {
   border: 1px solid black;
 }
 
+.visible-image:hover{
+  cursor: pointer;
+}
+
+
 
 #image-popup{
   display:none;

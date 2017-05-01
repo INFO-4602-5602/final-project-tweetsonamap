@@ -103,5 +103,4 @@ module.exports = function(config){
 
     console.log(tweet.geometry, tweet.properties)
   }
-
 }

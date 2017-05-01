@@ -192,6 +192,7 @@ module.exports = function(config){
 
               //Add the filter to the map
               map.setFilter('marker-layer',['all',[">=",'day',localBrushYearStart],["<=",'day',localBrushYearEnd]])
+
               map.fire('moveend')
               console.log('local=', [localBrushYearStart,localBrushYearEnd])
             }
