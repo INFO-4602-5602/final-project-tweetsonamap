@@ -4,19 +4,23 @@ module.exports = function(config){
 
     this.dataset = config.dataset
 
-    this.createTimeline = function(map){
-    	console.log("Starting the timeline vis")
+    this.createTimeline = function(){
+    	// Get dimensions of containing box
+        var parent_height = d3.select('#timeline-parent').node().getBoundingClientRect().height
+        var parent_width  = d3.select('#timeline-parent').node().getBoundingClientRect().width
 
         var margin = {top: 10, right: 10, bottom: 40, left: 60}; // Margin around visualization, including space for labels
-        var width = d3.select('#timeline').node().getBoundingClientRect().width - margin.left - margin.right; // Width of our visualization
-        var height = 200 - margin.top - margin.bottom; // Height of our visualization
+        var width  = parent_width - margin.left - margin.right; // Width of our visualization
+        var height = parent_height - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
 
-        var parseDate = d3.time.format("%Y-%m-%d").parse;
+        var parseDate  = d3.time.format("%Y-%m-%d").parse;
         var formatDate = d3.time.format("%a %b %d, %Y");
 
 
         d3.csv(this.dataset, function(csvData){
+
+            // Parse data
             var data = csvData;
 
             data.forEach(function(d,idx){
@@ -25,20 +29,23 @@ module.exports = function(config){
                 d.idx = idx;
             });
 
+            var brushIdxStart = d3.min(data, function(d) { return d.idx})
+            var brushIdxEnd   = d3.max(data, function(d) { return d.idx})
+
+            console.log(brushIdxStart, brushIdxEnd)
+
+            // Define scales
             var xScale = d3.scale.ordinal()
                             .rangeRoundBands([0, width], .05)
                             .domain(data.map(function(d) { return d.date; }));
 
             var xScaleIdx = d3.scale.ordinal()
-                            .rangeRoundBands([0, width], .05)
+                            .rangeRoundBands([0, width])
                             .domain(data.map(function(d) { return d.idx; }));
 
             var yScale = d3.scale.linear()
                             .range([height, 0])
                             .domain([0, d3.max(data, function(d) { return parseFloat(d.count); })+1]);
-
-            var brushYearStart = d3.min(data, function(d) { return d.idx})
-            var brushYearEnd   = d3.max(data, function(d) { return d.idx})
 
             // Create an SVG element to contain our visualization.
             var svg = d3.select("#timeline").append("svg")
@@ -48,12 +55,10 @@ module.exports = function(config){
                                           .append("g")
                                             .attr("transform","translate(" + margin.left + "," + margin.right + ")");
 
-
             // Build axes!
             // Specify the axis scale and general position
             var xAxis = d3.svg.axis()
                               .scale(xScale)
-                              .ticks(5)
                               .orient("bottom")
                               .tickFormat(d3.time.format("%m/%d"))
                               // .ticks(5);
@@ -164,17 +169,17 @@ module.exports = function(config){
                         .range(xScaleIdx.domain());
                 b = brush.extent();
 
-                var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
-                    localBrushYearEnd = (brush.empty()) ? brushYearEnd : Math.ceil(yScale(b[1]));
+                var localBrushIdxStart = (brush.empty()) ? brushIdxStart : Math.ceil(yScale(b[0])),
+                    localBrushIdxEnd = (brush.empty()) ? brushIdxEnd : Math.ceil(yScale(b[1]));
 
                 // Snap to rect edge
-                d3.select("g.brush").call((brush.empty()) ? brush.clear() : brush.extent([yScale.invert(localBrushYearStart), yScale.invert(localBrushYearEnd)]));
+                d3.select("g.brush").call((brush.empty()) ? brush.clear() : brush.extent([yScale.invert(localBrushIdxStart), yScale.invert(localBrushIdxEnd)]));
 
                 // Fade all years in the histogram not within the brush:
                 // for each bar, if index is within selected range, set opacity to 1
                 // else set opacity to .4
                 d3.selectAll("rect.rect").style("opacity", function(d, i) {
-                  return d.idx >= localBrushYearStart && d.idx < localBrushYearEnd || brush.empty() ? "1" : ".4";
+                  return d.idx >= localBrushIdxStart && d.idx < localBrushIdxEnd || brush.empty() ? "1" : ".4";
                 });
 
             }

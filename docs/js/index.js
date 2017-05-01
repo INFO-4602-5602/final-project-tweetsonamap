@@ -9,7 +9,12 @@ var GeoTaggedHandler   = require('./geotagged.js')
 var GeoLocatedHandler  = require('./geolocated.js')
 
 var ImageScroller      = require('./image_scroller.js')
+<<<<<<< HEAD
 var Timeline           = require('./timeline.js')
+=======
+
+var Timeline           = require('./timeline-d3v4.js')
+>>>>>>> d3
 
 
 //Initialize the timeline

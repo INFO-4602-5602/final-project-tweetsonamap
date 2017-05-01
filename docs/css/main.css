@@ -97,3 +97,19 @@ body {
   fill-opacity: .1;
   shape-rendering: crispEdges;
 }
+<<<<<<< HEAD
+=======
+
+
+/* Box containing timeline */
+#timeline-parent {
+  position:fixed; 
+  width:50%; 
+  height:30%; 
+  left: 50%; 
+  transform: translateX(-50%);
+  z-index:100; 
+  background-color:rgba(250,250,250,0.8); 
+  border-radius:8px
+}
+>>>>>>> d3
