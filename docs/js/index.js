@@ -15,7 +15,8 @@ var Timeline           = require('./timeline-d3v4.js')
 
 //Initialize the timeline
 var tweetTimeline = new Timeline({
-  dataset : siteConfig.tweets_per_day
+  dataset : siteConfig.tweets_per_day,
+  start_date : siteConfig.start_date
 })
 
 var geoTaggedHandler = new GeoTaggedHandler({
