@@ -112,7 +112,7 @@ module.exports = function(config){
     var imagePopUp = document.getElementById('image-popup')
       imagePopUp.style.display = 'block'
       imagePopUp.innerHTML =`<div class='image-popup'>
-      <img src="${this.img_root}/large/${tweet.properties.id}.jpg" />
+      <img id="selected-image" src="${this.img_root}/large/${tweet.properties.id}.jpg" />
       <p>${tweet.properties.id}</p>
       <p>${tweet.properties.text}</p>
       <p>${tweet.properties.user}</p>

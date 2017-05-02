@@ -56,7 +56,7 @@ module.exports = function(config){
         'type': "circle",
         'source': that.title,
         'paint':{
-          'circle-opacity':0.05,
+          'circle-opacity':0.15,
           'circle-color': 'green',
           'circle-radius' : {
             'property': 'area',
