@@ -2,6 +2,9 @@
 
 module.exports = function(config){
 
+  this.startDay = 0
+  this.endDay   = 20
+
     this.createTimeline = function(map,geoLocatedHandler){
         // Clear all svg
 
@@ -132,13 +135,13 @@ module.exports = function(config){
                 }
                 d3.select(this).transition().duration(300).call(d3.event.target.move, date1.map(xScale));
 
-                var startDay = d3.timeDay.count(that.start_date,date1[0])
-                var endDay   = d3.timeDay.count(that.start_date,date1[1])
+                that.startDay = d3.timeDay.count(that.start_date,date1[0])
+                that.endDay   = d3.timeDay.count(that.start_date,date1[1])
 
                 //Set filters for the map
-                map.setFilter('marker-layer',['all',[">=",'day',startDay],["<",'day',endDay]])
+                map.setFilter('marker-layer',['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
                 geoLocatedHandler.queryLayers.forEach(function(activeLayer){
-                  map.setFilter(activeLayer,['all',[">=",'day',startDay],["<",'day',endDay]])
+                  map.setFilter(activeLayer,['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
                 })
                 map.fire('moveend')
             }

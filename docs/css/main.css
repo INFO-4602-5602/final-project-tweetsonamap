@@ -51,18 +51,16 @@ body {
 }
 
 #image-popup-container{
-  height:40%;
-}
-
-#image-popup{
-  display:none;
-  max-height:50%;
+  text-align:center;
 }
 
 #selected-image{
-  max-height:400px;
+  max-height: 30vh;
 }
 
+#image-popup{
+  height:40%;
+}
 
 /* D3 Timeline */
 .axis {

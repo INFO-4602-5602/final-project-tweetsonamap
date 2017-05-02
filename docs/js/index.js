@@ -194,3 +194,36 @@ map.once('load', function () {
     },500)
   })
 })
+
+var userFilter = false
+window.toggleUserNameFilter = function(user){
+  userFilter = !userFilter
+
+  console.log(timeline.startDay, timeline.endDay)
+  if (userFilter){
+    map.setFilter('marker-layer',['all',[">=",'day',tweetTimeline.startDay],
+                                        ["<",'day',tweetTimeline.endDay],
+                                        ["==","user",user]])
+    geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+      map.setFilter(activeLayer,['all',[">=",'day',tweetTimeline.startDay],
+                                       ["<",'day',tweetTimeline.endDay],
+                                       ["==","user",user]])
+    })
+  }else{
+    map.setFilter('marker-layer',['all',[">=",'day',tweetTimeline.startDay],
+                                        ["<",'day',tweetTimeline.endDay]])
+    geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+      map.setFilter(activeLayer,['all',[">=",'day',tweetTimeline.startDay],
+                                       ["<",'day',tweetTimeline.endDay]])
+    });
+  }
+  var holdUp = setInterval(function(){
+    if(map.loaded()){
+      clearInterval(holdUp)
+      map.fire('moveend')
+    }else{
+      document.getElementById('loading-status').innerHTML = 'Loading Tweets...'
+      document.getElementById('loading-bar').className = "loading m6"
+    }
+  },500)
+}
