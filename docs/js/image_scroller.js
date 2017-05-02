@@ -113,11 +113,12 @@ module.exports = function(config){
       imagePopUp.style.display = 'block'
       imagePopUp.innerHTML =`<div class='image-popup'>
         <div id='image-container'>
-          <img id="selected-image" src="${this.img_root}/large/${tweet.properties.id}.jpg" />
+          <a class="link" target="_blank" href="http://twitter.com/statuses/${tweet.properties.id}">
+            <img id="selected-image" src="${this.img_root}/large/${tweet.properties.id}.jpg" />
+          </a>
         </div>
         <p class="prose txt-s align-l">${tweet.properties.text}</p>
         <p class="prose txt-s align-l"><strong>User: </strong><span class="link"  id="toggleUserNameFilter" onClick="window.toggleUserNameFilter('${tweet.properties.user}')">${tweet.properties.user}</span></p>
-        <p><a class="link" target="_blank" href="http://twitter.com/statuses/${tweet.properties.id}">See on Twitter</a></p>
    </div>`
 
     console.log(tweet.geometry, tweet.properties)
