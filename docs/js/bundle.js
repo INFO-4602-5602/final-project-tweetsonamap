@@ -1,74 +1,127 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
  "web_root" : "/data/www/jennings/infovis",
- "img_root" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images/",
+ "img_root" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images",
  "start_date" : "2016-9-25",
  "mapboxAccessToken" : "pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A",
  "markers" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson",
  "polygon_features": "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-features.geojson",
  "polygon_centers" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-centers-no-tweets.geojson",
+ "polyon_features_as_points" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-tweets-individual-points.geojson",
  "tweets_per_day"  : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/matthew_tweets_per_day.csv"
 }
 
 },{}],2:[function(require,module,exports){
-/*
+var util = require("../lib/functions.js")
 
-  Functions to handle adding images to maps and scaling appropriately
+var popup = new mapboxgl.Popup({})
 
-  Things to do here:
-  > Scale appropriately based on zoom level
+var featureLevels = [
+  {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
+                                                   maxzoom: 4.5,
+                                                   minzoom: 2  },
+  {'name' : 'xl-polygon',  filter: ['all',
+                                                  ['>', 'area', 20000],
+                                                  ['<=','area', 40000]
+                                                ], maxzoom: 8.5,
+                                                   minzoom: 4  },
+  {'name' : 'l-polygon',   filter: ['all',
+                                                  ['>', 'area', 10000],
+                                                  ['<=','area', 20000]
+                                                ], maxzoom: 8.5,
+                                                   minzoom: 4  },
+  {'name' : 'm-polygon',   filter: ['all',
+                                                  ['>', 'area', 1000],
+                                                  ['<=','area',10000]
+                                                ], maxzoom: 9.5,
+                                                   minzoom: 5  },
 
-  Things not do here: call _map_
-
-*/
+  {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
+                                                   maxzoom: 22,
+                                                   minzoom: 6  }]
 
 module.exports = function(config){
 
-  this.img_height = config.img_height
-  this.img_width  = config.img_width
-  this.img_dir    = config.img_dir
-  this.extension  = config.extension
   this.geojson    = config.geojson
   this.load_lim   = config.load_lim
+  this.title      = 'geolocated-tweets'
+  this.queryLayers = []
 
-  this.activeSources = []
+  this.on         = true;
 
-  this.buildCoordinates = function(coords, zoom){
-    /*
-      Input: point coordinates & zoom level
-      Return: Array of ul,ur,lr,ll coordinates to scale image for zoom level
-    */
-    var lon = coords[0]
-    var lat = coords[1]
-
-    //TODO: overhaul this logic, make it scale appropriately with the projection,
-    //and more zoom levels?
-    var zoomScales = {
-      0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 0.1, 6: 0.5, 7: 0.06,
-      8: 0.05, 9: 0.04, 10: 0.03, 11: 0.02, 12: 0.01,
-      13: 0.008, 14: 0.003, 15: 0.001, 16: 0.0008, 17: 0.0003,  18: 0.0001,  19: 0.00003
-    }
-    var scale = zoomScales[zoom]
-
-    //ul,ur,lr,ll
-    return [
-      [lon - scale, lat + scale],
-      [lon + scale, lat + scale],
-      [lon + scale, lat - scale],
-      [lon - scale, lat - scale]
-    ]
+  this.addSource = function(map){
+    map.addSource(this.title,{
+      type: "geojson",
+      data: this.geojson
+    })
   }
 
-  this.buildImageSrc = function(feature, zoom){
-    return {
-      "type": "image",
-      "url":  this.img_dir + "/" + feature.properties.id + this.extension,
-      "coordinates": this.buildCoordinates(feature.geometry.coordinates, zoom)
-    }
+  this.addPolyPoints = function(map){
+    this.on=true;
+    var that = this;
+
+    featureLevels.forEach(function(level){
+
+      //these are the queryable layers
+      that.queryLayers.push(level.name + "-circle-layer")
+
+      map.addLayer({
+        'id': level.name + "-circle-layer",
+        'type': "circle",
+        'source': that.title,
+        'paint':{
+          'circle-opacity':0.15,
+          'circle-color': 'green',
+          'circle-radius' : {
+            'property': 'area',
+            'stops' : [[0,4],[9999999,100]]
+          }
+        },
+        'filter': level.filter,
+        'maxzoom': level.maxzoom,
+        'minzoom': level.minzoom
+      })
+    })
+
+    var that = this;
+    that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
+    featureLevels.forEach(function(layer){
+      map.on('click',layer.name+"-circle-layer",function(e){
+        that.polygonClick(e, map)
+      })
+    });
+  }
+
+  this.getVisibleFeatures = function(map){
+    var features = map.queryRenderedFeatures( {layers:this.queryLayers} )
+    if (!features.length) return [0,[]]
+
+    var uniqueTweetIDs = []
+    var uniqueTweets = []
+
+    var uniqueFeatures = util.getUniqueFeatures(features.slice(0,this.load_lim+25), 'id')
+
+    return [uniqueFeatures.length, uniqueFeatures.slice(0,this.load_lim)]
+  }
+
+  this.hide = function(map){
+    console.log("Turning off geolocated features")
+    this.queryLayers.forEach(function(activeLayer){
+      map.setLayoutProperty(activeLayer,'visibility','none')
+    })
+    this.on = false;
+  }
+
+  this.show = function(map){
+    console.log("Turnign on geolocated features")
+    this.queryLayers.forEach(function(activeLayer){
+      map.setLayoutProperty(activeLayer,'visibility','visible')
+    })
+    this.on = true;
   }
 }
 
-},{}],3:[function(require,module,exports){
+},{"../lib/functions.js":7}],3:[function(require,module,exports){
 var util = require("../lib/functions.js")
 
 var popup = new mapboxgl.Popup()
@@ -98,20 +151,24 @@ module.exports = function(config){
     map.addLayer({
       "id": "marker-layer",
       "type": "circle",
-      "source": that.title
+      "source": that.title,
+      "paint":{
+        'circle-color':'green',
+        'circle-radius':6
+      }
     });
   }
 
   this.getVisibleFeatures = function(map){
     if (map.getLayer('marker-layer')){
       var features = map.queryRenderedFeatures({layers: ['marker-layer']})
-      if (!features.length) return [] //If no features exist here, return empty array
+      if (!features.length) return [0,[]] //If no features exist here, return empty array
 
-      var uniqueFeatures = util.getUniqueGeometries(features).slice(0,this.load_lim); //Only ever take the load limit
+      var uniqueFeatures = util.getUniqueGeometries(features); //Only ever take the load limit
 
-      return uniqueFeatures
+      return [uniqueFeatures.length, uniqueFeatures.slice(0,this.load_lim)]
     }else{
-      return []
+      return [0,[]]
     }
   }
 
@@ -121,21 +178,9 @@ module.exports = function(config){
 
     var markerDiv  = document.createElement('div')
         markerDiv.className = 'marker';
-        // markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}${this.extension}` + ')';
         markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}` + '.jpg)';
         markerDiv.style.width  = this.img_width+'px';
         markerDiv.style.height = this.img_height+'px';
-
-        // markerDiv.addEventListener('mouseenter', function() {
-        //     popup.setLngLat(feature.geometry.coordinates)
-        //          .setHTML(that.prettyPopUp(feature.properties))
-        //          .addTo(map)
-        //
-        // });
-        //
-        // markerDiv.addEventListener('mouseleave', function() {
-        //   popup.remove();
-        // });
 
     var marker = new mapboxgl.Marker(markerDiv, {offset: [-50,-50]})
       .setLngLat(feature.geometry.coordinates)
@@ -215,7 +260,7 @@ module.exports = function(config){
 
 }
 
-},{"../lib/functions.js":9}],4:[function(require,module,exports){
+},{"../lib/functions.js":7}],4:[function(require,module,exports){
 var util = require("../lib/functions.js")
 
 module.exports = function(config){
@@ -227,7 +272,10 @@ module.exports = function(config){
 
   this.img_root   = config.img_root
 
+  //This is the powerhouse function: It takes a list of map features and adds them to the image list.
   this.renderTweets = function(tweets, map, popup){
+
+    console.log("Rendering Tweets: ",tweets.length)
 
     //Clear the current list of images
     var list = document.getElementById('images')
@@ -236,8 +284,8 @@ module.exports = function(config){
     tweets.slice(0,this.initial_load_size).forEach(function(tweet){
       var li = document.createElement('li')
         li.className = 'visible-image'
-        //li.innerHTML = `<p>Tweet:</p><p>${tweet.properties.id}</p>`
-        li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
+
+        li.style.backgroundImage = 'url(' + `${that.img_root}/small/${tweet.properties.id}.jpg` + ')';
         li.addEventListener('click',function(){
           that.tweetClicked(tweet, map, popup)
         })
@@ -264,12 +312,18 @@ module.exports = function(config){
 
       var list = document.getElementById('images')
       var that = this;
-      this.extraTweets.slice(0,20).forEach(function(tweet){
+      this.extraTweets.slice(0,50).forEach(function(tweet){
         var li = document.createElement('li')
           li.className = 'visible-image'
-          li.style.backgroundImage = 'url(' + `${tweet.properties.thumb}` + ')';
+          li.style.backgroundImage = 'url(' + `${that.img_root}/small/${tweet.properties.id}.jpg` + ')';
           li.addEventListener('click',function(){
             that.tweetClicked(tweet, map, popup)
+          })
+          li.addEventListener('mouseenter',function(){
+            that.tweetMouseEnter(tweet, map, popup)
+          })
+          li.addEventListener('mouseleave',function(){
+            that.tweetMouseExit(tweet, map, popup)
           })
         list.appendChild(li)
       })
@@ -280,32 +334,40 @@ module.exports = function(config){
   }
 
   this.tweetMouseEnter = function(tweet, map, popup){
-    if (tweet.geometry.type=="Point"){
-      //If the layer is already active, just update the data
-      if (map.getLayer('tweet-highlight-circle')){
-        map.getSource('tweet-highlight-circle-coords').setData(tweet.geometry)
-      }else{
-        //Layer does not exist, add the source and the layer
-        map.addSource('tweet-highlight-circle-coords',{
-          "type" : 'geojson',
-          "data" : tweet.geometry
-        })
-        map.addLayer({
-          id:   "tweet-highlight-circle",
-          type: "circle",
-          source: 'tweet-highlight-circle-coords',
-          "paint":{
-            "circle-color":'blue'
-          }
-        })
-      }
-
+    //If the layer is already active, just update the data
+    var r = 10;
+    if (tweet.properties.hasOwnProperty('area')){
+      r = Math.log(tweet.properties.area) * (map.getZoom())
     }
+    if (map.getLayer('tweet-highlight-circle')){
+      map.getSource('tweet-highlight-circle-coords').setData(tweet.geometry)
+      map.setPaintProperty('tweet-highlight-circle','circle-radius',r)
+      map.setLayoutProperty('tweet-highlight-circle','visibility','visible')
+    }else{
+      //Layer does not exist, add the source and the layer
+      map.addSource('tweet-highlight-circle-coords',{
+        "type" : 'geojson',
+        "data" : tweet.geometry
+      })
+      map.addLayer({
+        id:   "tweet-highlight-circle",
+        type: "circle",
+        source: 'tweet-highlight-circle-coords',
+        "paint":{
+          "circle-color":'salmon',
+          "circle-radius" : r,
+          "circle-opacity": 0.8
+        }
+      })
+    }
+
   }
 
 
   this.tweetMouseExit = function(tweet, map, popup){
-    console.log("LEAVING")
+    if (map.getLayer('tweet-highlight-circle')){
+      map.setLayoutProperty('tweet-highlight-circle','visibility','none')
+    }
   }
 
   this.tweetClicked = function(tweet, map, popup){
@@ -313,63 +375,55 @@ module.exports = function(config){
     var imagePopUp = document.getElementById('image-popup')
       imagePopUp.style.display = 'block'
       imagePopUp.innerHTML =`<div class='image-popup'>
-      <img src="${this.img_root}/medium/${tweet.properties.id}.jpg" />
-      <p>${tweet.properties.id}</p>
-      <p>${tweet.properties.text}</p>
-      <p>${tweet.properties.user}</p>
+        <div id='image-container'>
+          <img id="selected-image" src="${this.img_root}/large/${tweet.properties.id}.jpg" />
+        </div>
+        <p class="prose txt-s align-l">${tweet.properties.text}</p>
+        <p class="prose txt-s align-l"><strong>User: </strong><span class="link"  id="toggleUserNameFilter" onClick="window.toggleUserNameFilter('${tweet.properties.user}')">${tweet.properties.user}</span></p>
+        <p><a class="link" target="_blank" href="http://twitter.com/statuses/${tweet.properties.id}">See on Twitter</a></p>
    </div>`
 
     console.log(tweet.geometry, tweet.properties)
   }
-
 }
 
-},{"../lib/functions.js":9}],5:[function(require,module,exports){
+},{"../lib/functions.js":7}],5:[function(require,module,exports){
 'use strict';
 
-console.log("STARTING")
-
 var siteConfig         = require('../config.js')
+console.log("Site Configuration Loaded. Start date: "+siteConfig.start_date)
 
 var util               = require('../lib/functions.js')
-var ImageHandler       = require('./image_maps.js')
-var MarkerHandler      = require('./image_markers.js')
-var PolygonHandler     = require('./polygon_layers.js')
-var PolyCentersHandler = require('./polygon-centers_layer.js')
+
+var GeoTaggedHandler   = require('./geotagged.js')
+var GeoLocatedHandler  = require('./geolocated.js')
+
 var ImageScroller      = require('./image_scroller.js')
-var Timeline           = require('./timeline.js')
+var Timeline           = require('./timeline-d3v4.js')
+
 
 //Initialize the timeline
 var tweetTimeline = new Timeline({
-  dataset : siteConfig.tweets_per_day
+  dataset : siteConfig.tweets_per_day,
+  start_date : siteConfig.start_date
 })
 
-var markerHandler = new MarkerHandler({
+var geoTaggedHandler = new GeoTaggedHandler({
   img_height: 100,
   img_width:  100,
   geojson:    siteConfig.markers,
   img_url:    siteConfig.img_root,
-  load_lim:   100,
+  load_lim:   200,
   title:      'geotagged-point-images'
 })
 
-var polygonHandler = new PolygonHandler({
-  img_height: 150,
-  img_width:  150,
-  geojson:    siteConfig.polygon_features,
-  load_lim:   100,
-  extension:  ".jpg"
-})
-
-var polyCentersHandler = new PolyCentersHandler({
-  img_height: 150,
-  img_width:  150,
-  geojson:    siteConfig.polygon_centers,
-  load_lim:   100
+var geoLocatedHandler = new GeoLocatedHandler({
+  geojson:    siteConfig.polyon_features_as_points,
+  load_lim:   200
 })
 
 var imageScroller = new ImageScroller({
-  load_lim: 30,
+  load_lim: 80,
   img_root : siteConfig.img_root
 })
 
@@ -377,27 +431,27 @@ var imageScroller = new ImageScroller({
 mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 
 var map = new mapboxgl.Map({
-    container: 'map',
-    style: 'mapbox://styles/mapbox/light-v9',
-    center: [-73.054, 18.429],
-    zoom: 6.5,
-    minZoom: 2,
-    hash:true
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v9',
+  center: [-73.054, 18.429],
+  zoom: 6.5,
+  minZoom: 2,
+  hash:true
 });
 
-tweetTimeline.createTimeline(map)
+//Launch the timeline
+tweetTimeline.createTimeline(map, geoLocatedHandler)
 
 var initialLoading = setInterval(function(){
   if(map.loaded()){
     clearInterval(initialLoading)
-    // document.getElementById('blocker').style="display:none;"
     document.getElementById('loading-status').innerHTML = 'Loaded'
     document.getElementById('loading-bar').className = "m6"
 
     //Fire it up...
     map.fire('moveend')
   }else{
-    document.getElementById('loading-status').innerHTML = 'Loading map'
+    document.getElementById('loading-status').innerHTML = 'Loading Map'
     document.getElementById('loading-bar').className = "loading m6"
   }
 },1000)
@@ -417,14 +471,14 @@ document.getElementById('render-markers').addEventListener('change', function(e)
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        markerHandler.renderMarkers(map)
+        geoTaggedHandler.renderMarkers(map)
       }else{
         console.log(".")
       }
     },500)
   }else{
     console.log("Don't render markers")
-    markerHandler.removeAllMarkers(map)
+    geoTaggedHandler.removeAllMarkers(map)
   }
 });
 
@@ -436,7 +490,7 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
 
     if (document.getElementById('render-markers').checked){
       document.getElementById('render-markers').checked = null;
-      markerHandler.removeAllMarkers(map)
+      geoTaggedHandler.removeAllMarkers(map)
     }
   }
   var holdUp = setInterval(function(){
@@ -449,15 +503,13 @@ document.getElementById('show-geotagged-tweets').addEventListener('change', func
   },500)
 });
 
-document.getElementById('show-polygon-tweets').addEventListener('change', function(e){
+document.getElementById('show-geolocated-tweets').addEventListener('change', function(e){
   if (e.target.checked){
     console.log("Polygons on")
-    polygonHandler.show(map)
-    polyCentersHandler.show(map)
+    geoLocatedHandler.show(map)
   }else{
     console.log("Turning polygons off")
-    polygonHandler.hide(map)
-    polyCentersHandler.hide(map)
+    geoLocatedHandler.hide(map)
   }
   var holdUp = setInterval(function(){
     if(map.loaded()){
@@ -479,21 +531,17 @@ document.getElementById('images').addEventListener('scroll', function(){
 map.once('load', function () {
 
   //Add sources
-  markerHandler.addSource(map)
-  polygonHandler.addSource(map)
-  polyCentersHandler.addSource(map)
+  geoTaggedHandler.addSource(map)
+  geoLocatedHandler.addSource(map)
 
   //Add the markers
-  markerHandler.addMarkerLayer(map)
+  geoTaggedHandler.addMarkerLayer(map)
 
-  //Add the Polygons
-  polygonHandler.addPolygonLayers(map)
+  //Add the Poly Points
+  geoLocatedHandler.addPolyPoints(map)
 
-  //Add the centers
-  polyCentersHandler.addCirclesLayer(map)
 
-  // The worker to control the images.  Needs to check EVERY layer
-
+  // The worker to control the images. Checks all layers
 
   map.on('moveend',function(){
     imageScroller.working = true;
@@ -503,16 +551,18 @@ map.once('load', function () {
     var holdUp = setInterval(function(){
       if(map.loaded()){
         clearInterval(holdUp)
-        
+
         var visibleFeatures = []
 
-        if (document.getElementById('render-markers').checked) markerHandler.renderMarkers(map)
-        var markerFeats = markerHandler.getVisibleFeatures(map)
-        var polyFeats   = polygonHandler.getVisibleFeatures(map)
-        visibleFeatures = visibleFeatures.concat( markerFeats )
-        visibleFeatures = visibleFeatures.concat( polyFeats )
+        if (document.getElementById('render-markers').checked) geoTaggedHandler.renderMarkers(map)
 
-        // var totalFeats = markerFeats[0] + polyFeats[0]
+        var geoTagged = geoTaggedHandler.getVisibleFeatures(map)
+        var geoLocated = geoLocatedHandler.getVisibleFeatures(map)
+
+        visibleFeatures = visibleFeatures.concat( geoTagged[1] )
+        visibleFeatures = visibleFeatures.concat( geoLocated[1] )
+
+        var totalFeatures = geoTagged[0] + geoLocated[0]
 
         imageScroller.renderTweets(visibleFeatures, map, tweetPopUp)
 
@@ -520,9 +570,9 @@ map.once('load', function () {
           if (!imageScroller.working){
             clearInterval(imageHoldUp)
             document.getElementById('loading-bar').className = "m6"
-            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images`
+            document.getElementById('loading-status').innerHTML = `${totalFeatures} Images`
           }else{
-            document.getElementById('loading-status').innerHTML = `${visibleFeatures.length} Images...`
+            document.getElementById('loading-status').innerHTML = `${totalFeatures} Images...`
             //document.getElementById('loading-bar').className = "loading m6"
           }
         },100);
@@ -535,290 +585,75 @@ map.once('load', function () {
   })
 })
 
-},{"../config.js":1,"../lib/functions.js":9,"./image_maps.js":2,"./image_markers.js":3,"./image_scroller.js":4,"./polygon-centers_layer.js":6,"./polygon_layers.js":7,"./timeline.js":8}],6:[function(require,module,exports){
-var util = require("../lib/functions.js")
+var userFilter = false
+window.toggleUserNameFilter = function(user){
+  userFilter = !userFilter
 
-var popup = new mapboxgl.Popup({})
-
-var featureLevels = [
-  {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
-                                                   maxzoom: 4.5,  minzoom: 2},
-  {'name' : 'xl-polygon',  filter: ['all',
-                                                  ['>', 'area', 20000],
-                                                  ['<=','area', 40000]
-                                                ], maxzoom: 8.5,  minzoom: 2},
-  {'name' : 'l-polygon',   filter: ['all',
-                                                  ['>', 'area', 10000],
-                                                  ['<=','area', 20000]
-                                                ], maxzoom: 8.5, minzoom: 2},
-  {'name' : 'm-polygon',   filter: ['all',
-                                                  ['>', 'area', 1000],
-                                                  ['<=','area',10000]
-                                                ], maxzoom: 9.5, minzoom: 2},
-  {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
-                                                  maxzoom: 22, minzoom: 2}]
-
-
-module.exports = function(config){
-
-  this.img_height = config.img_height
-  this.img_width  = config.img_width
-  this.img_dir    = config.img_dir
-  this.extension  = config.extension
-  this.geojson    = config.geojson
-  this.load_lim   = config.load_lim
-  this.title      = 'polygon-centers'
-
-  this.on         = false;
-
-  this.activeLayers = []
-
-
-  this.addSource = function(map){
-    map.addSource(this.title,{
-      type: "geojson",
-      data: this.geojson
+  console.log(timeline.startDay, timeline.endDay)
+  if (userFilter){
+    map.setFilter('marker-layer',['all',[">=",'day',tweetTimeline.startDay],
+                                        ["<",'day',tweetTimeline.endDay],
+                                        ["==","user",user]])
+    geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+      map.setFilter(activeLayer,['all',[">=",'day',tweetTimeline.startDay],
+                                       ["<",'day',tweetTimeline.endDay],
+                                       ["==","user",user]])
     })
-  }
-
-  this.addCirclesLayer = function(map){
-
-    this.on=true;
-
-    var that = this
-
-    this.circlePopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map)
-
-    featureLevels.forEach(function(level){
-
-      map.addLayer({
-        'id': level.name + "-center-circle-layer",
-        'type': "circle",
-        'source': 'polygon-centers',
-        'paint' : {
-          'circle-color' : 'salmon',
-          'circle-opacity' : {
-            'property': 'count',
-            'stops'   : [[0,0.1],[100,1]]
-          },
-          'circle-radius' : {
-            'property': 'area',
-            'stops' : [[0,4],[9999999,100]]
-          }
-        },
-        'filter': level.filter,
-        'minzoom' : level.minzoom,
-        'maxzoom' : level.maxzoom
-      })
-
-      that.activeLayers.push(level.name + "-center-circle-layer")
-
-      map.on('click',level.name + "-center-circle-layer",function(e){
-        that.circleClick(e, map)
-      });
-
-      // map.addLayer({
-      //   'id': level.name + "-center-symbol-layer",
-      //   'type': "symbol",
-      //   'source': 'polygon-centers',
-      //   'layout':{
-      //     'text-field': '{count}'
-      //   },
-      //   'filter': level.filter
-      // })
-
-      // map.addLayer({
-      //   'id': level.name + "-name-layer",
-      //   'type': "symbol",
-      //   'source': 'polygon-centers',
-      //   'layout':{
-      //     'text-field': '{displayName} ({count})'
-      //   },
-      //   'filter': level.filter,
-      //   'minzoom' : 5
-      // })
-    })
-  }
-
-  this.circleClick = function(e, map){
-    map.getCanvas().style.cursor = 'pointer';
-    this.circlePopup.setLngLat(e.features[0].geometry.coordinates)
-        .setHTML(`<h4>Name: ${e.features[0].properties.displayName}</h4>
-          <h4>Area: ${e.features[0].properties.area}</h4>
-          <h4>Tweets: ${e.features[0].properties.count}</h4>`)
-        .addTo(map);
-  }
-
-  this.hide = function(map){
-    console.log("Turning it off?")
-    this.activeLayers.forEach(function(activeLayer){
-      map.setLayoutProperty(activeLayer,'visibility','none')
-    })
-    this.on = false;
-  }
-
-  this.show = function(map){
-    this.activeLayers.forEach(function(activeLayer){
-      map.setLayoutProperty(activeLayer,'visibility','visible')
-    })
-    this.on = true;
-  }
-}
-
-},{"../lib/functions.js":9}],7:[function(require,module,exports){
-var util = require("../lib/functions.js")
-
-var popup = new mapboxgl.Popup({})
-
-var featureLevels = [
-  {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
-                                                   maxzoom: 4.5,
-                                                   minzoom: 2  },
-  {'name' : 'xl-polygon',  filter: ['all',
-                                                  ['>', 'area', 20000],
-                                                  ['<=','area', 40000]
-                                                ], maxzoom: 8.5,
-                                                   minzoom: 4  },
-  {'name' : 'l-polygon',   filter: ['all',
-                                                  ['>', 'area', 10000],
-                                                  ['<=','area', 20000]
-                                                ], maxzoom: 8.5,
-                                                   minzoom: 4  },
-  {'name' : 'm-polygon',   filter: ['all',
-                                                  ['>', 'area', 1000],
-                                                  ['<=','area',10000]
-                                                ], maxzoom: 9.5,
-                                                   minzoom: 5  },
-
-  {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
-                                                   maxzoom: 22,
-                                                   minzoom: 6  }]
-
-module.exports = function(config){
-
-  this.img_height = config.img_height
-  this.img_width  = config.img_width
-  this.img_dir    = config.img_dir
-  this.extension  = config.extension
-  this.geojson    = config.geojson
-  this.load_lim   = config.load_lim
-  this.title      = 'polygon-tweets'
-  this.queryLayers = []
-
-  this.on         = true;
-
-  this.addSource = function(map){
-    map.addSource(this.title,{
-      type: "geojson",
-      data: this.geojson
-    })
-  }
-
-  this.addPolygonLayers = function(map){
-    this.on=true;
-    var that = this;
-
-    featureLevels.forEach(function(level){
-
-      //these are the queryable layers
-      that.queryLayers.push(level.name + "-fill-layer")
-
-      map.addLayer({
-        'id': level.name + "-fill-layer",
-        'type': "fill",
-        'source': 'polygon-tweets',
-        'paint':{
-          'fill-opacity':0,
-          'fill-color': 'salmon'
-        },
-        'filter': level.filter,
-        'maxzoom': level.maxzoom,
-        'minzoom': level.minzoom
-      })
-    })
-
-    var that = this;
-    that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
-    featureLevels.forEach(function(layer){
-      map.on('click',layer.name+"-fill-layer",function(e){
-        that.polygonClick(e, map)
-      })
+  }else{
+    map.setFilter('marker-layer',['all',[">=",'day',tweetTimeline.startDay],
+                                        ["<",'day',tweetTimeline.endDay]])
+    geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+      map.setFilter(activeLayer,['all',[">=",'day',tweetTimeline.startDay],
+                                       ["<",'day',tweetTimeline.endDay]])
     });
   }
-
-  this.getVisibleFeatures = function(map){
-    var features = map.queryRenderedFeatures( {layers:this.queryLayers} )
-    if (!features.length) return []
-
-    var uniqueTweetIDs = []
-    var uniqueTweets = []
-
-    //Loop through the features, find unique ids, exit if necessary.
-    for (var f_idx=0; f_idx < features.length; f_idx++){
-      //Get the tweets array back from the original feature
-      var tweets = JSON.parse(features[f_idx].properties.tweets)
-      for(var i=0; i<tweets.length; i++){
-        //Check if we've seeen this tweet?
-        if(uniqueTweetIDs.indexOf(tweets[i].id) < 0){
-          uniqueTweetIDs.push(tweets[i].id)
-          uniqueTweets.push({
-            'geometry' : features[f_idx].geometry,
-            'properties' : tweets[i]})
-        }
-        if (uniqueTweetIDs.length >= this.load_lim){
-          return uniqueTweets
-        }
-      }
+  var holdUp = setInterval(function(){
+    if(map.loaded()){
+      clearInterval(holdUp)
+      map.fire('moveend')
+    }else{
+      document.getElementById('loading-status').innerHTML = 'Loading Tweets...'
+      document.getElementById('loading-bar').className = "loading m6"
     }
-    return uniqueTweets
-  }
-
-  this.polygonClick = function(e, map){
-    map.getCanvas().style.cursor = 'pointer';
-    //map.setFilter('polygon-fills-hover', ["==", "displayName", e.features[0].properties.displayName])
-    this.polyPopup.setLngLat(e.features[0].geometry.coordinates[0][1])
-        .setHTML(`<h4>Name: ${e.features[0].properties.displayName}</h4>
-          <h4>Area: ${e.features[0].properties.area}</h4>
-          <h4>Tweets: ${e.features[0].properties.count}</h4>`)
-        .addTo(map);
-  }
-
-  this.hide = function(map){
-    console.log("Turning it off?")
-    this.queryLayers.forEach(function(activeLayer){
-      map.setLayoutProperty(activeLayer,'visibility','none')
-    })
-    this.on = false;
-  }
-
-  this.show = function(map){
-    this.queryLayers.forEach(function(activeLayer){
-      map.setLayoutProperty(activeLayer,'visibility','visible')
-    })
-    this.on = true;
-  }
+  },500)
 }
 
-},{"../lib/functions.js":9}],8:[function(require,module,exports){
+},{"../config.js":1,"../lib/functions.js":7,"./geolocated.js":2,"./geotagged.js":3,"./image_scroller.js":4,"./timeline-d3v4.js":6}],6:[function(require,module,exports){
 /*  js for services */
 
 module.exports = function(config){
 
-    this.dataset = config.dataset
+  this.startDay = 0
+  this.endDay   = 20
 
-    this.createTimeline = function(map){
-    	console.log("Starting the timeline vis")
+    this.createTimeline = function(map,geoLocatedHandler){
+        // Clear all svg
+
+
+    	// Get dimensions of containing box
+        var parent_height = d3.select('#timeline-parent').node().getBoundingClientRect().height
+        var parent_width  = d3.select('#timeline-parent').node().getBoundingClientRect().width
+
 
         var margin = {top: 10, right: 10, bottom: 40, left: 60}; // Margin around visualization, including space for labels
-        var width = d3.select('#timeline').node().getBoundingClientRect().width - margin.left - margin.right; // Width of our visualization
-        var height = 200 - margin.top - margin.bottom; // Height of our visualization
+        var width  = parent_width - margin.left - margin.right; // Width of our visualization
+        var height = parent_height - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
 
-        var parseDate = d3.time.format("%Y-%m-%d").parse;
-        var formatDate = d3.time.format("%a %b %d, %Y");
 
+
+        var parseDate  = d3.timeParse("%Y-%m-%d");
+        var parseDate2 = d3.timeParse("%Y-%-m-%d");
+        var formatDate = d3.timeFormat("%a %b %d, %Y");
+        var formatSimpleDate = d3.timeFormat("%b %-d")
+
+        this.dataset = config.dataset;
+        this.start_date = parseDate2(config.start_date); // Sun Sep 25 2016 00:00:00 GMT-0600 (MDT)
+        var that = this;
 
         d3.csv(this.dataset, function(csvData){
+
+            // Parse data
             var data = csvData;
 
             data.forEach(function(d,idx){
@@ -827,20 +662,20 @@ module.exports = function(config){
                 d.idx = idx;
             });
 
-            var xScale = d3.scale.ordinal()
-                            .rangeRoundBands([0, width], .05)
-                            .domain(data.map(function(d) { return d.date; }));
+            var brushDateStart = new Date(data[0].date) // Sep 25
+            var brushDateEnd   = d3.timeDay.offset(new Date(data[data.length-1].date),1) // Oct 22
 
-            var xScaleIdx = d3.scale.ordinal()
-                            .rangeRoundBands([0, width], .05)
-                            .domain(data.map(function(d) { return d.idx; }));
+            console.log(formatSimpleDate(brushDateStart),"-", formatSimpleDate(brushDateEnd))
 
-            var yScale = d3.scale.linear()
+            // Define scales
+            var xScale = d3.scaleTime()
+                            .rangeRound([0, width])
+                            .domain([new Date(data[0].date),
+                                d3.timeDay.offset(new Date(data[data.length-1].date),1)])
+
+            var yScale = d3.scaleLinear()
                             .range([height, 0])
                             .domain([0, d3.max(data, function(d) { return parseFloat(d.count); })+1]);
-
-            var brushYearStart = d3.min(data, function(d) { return d.idx})
-            var brushYearEnd   = d3.max(data, function(d) { return d.idx})
 
             // Create an SVG element to contain our visualization.
             var svg = d3.select("#timeline").append("svg")
@@ -850,15 +685,9 @@ module.exports = function(config){
                                           .append("g")
                                             .attr("transform","translate(" + margin.left + "," + margin.right + ")");
 
-
             // Build axes!
             // Specify the axis scale and general position
-            var xAxis = d3.svg.axis()
-                              .scale(xScale)
-                              .ticks(5)
-                              .orient("bottom")
-                              .tickFormat(d3.time.format("%m/%d"))
-                              // .ticks(5);
+            var xAxis = d3.axisBottom(xScale).tickSize(2)
 
             var xAxisG = svg.append('g')
                             .attr('class', 'axis')
@@ -868,7 +697,7 @@ module.exports = function(config){
                           .selectAll("text")
                             .attr("dy", ".35em")
                             .attr("dx", "-.5em")
-                            .attr("transform", "rotate(-45)")
+                            .attr("transform", "translate(10,0) rotate(-45)")
                             .style("text-anchor", "end");
 
             // // Update width of chart to accommodate long rotated x-axis labels
@@ -879,10 +708,7 @@ module.exports = function(config){
                     .attr("height", d3.select('#timeline').node().getBoundingClientRect().height)
 
             // Repeat for the y-axis
-            var yAxis = d3.svg.axis()
-                              .scale(yScale)
-                              .orient("left")
-                              .ticks(5);
+            var yAxis = d3.axisLeft(yScale).tickSize(5).ticks(5);
 
             var yAxisG = svg.append('g')
                             .attr('class', 'axis')
@@ -903,115 +729,75 @@ module.exports = function(config){
 
             bar.enter().append("rect")
                 .attr("class", "rect")
-                .attr("x", function(d) { return xScale(d.date); })
+                .attr("x", function(d) { return xScale(new Date(d.date)); })
                 .attr("y", function(d) { return yScale(d.count); })
                 .attr("id", function(d) { return "bar-"+d.date; })
                 .attr("height", function(d) { return height-yScale(d.count); })
-                .attr("width", xScale.rangeBand())
+                .attr("width",width/(data.length-1)*.9)
                 .style("fill", "lightsteelblue");
 
-            // Add tooltip
-            var tip = d3.tip()
-                .attr('class', 'd3-tip')
-                .offset([0, 0])
-                .html(function(d) {
-                    return "<span style='color:white'>"+formatDate(d.date)+"</br>"+d.count+" tweets</span>";
+            // Brush code from https://bl.ocks.org/mbostock/6232537
+            svg.append("g")
+                .attr("class", "brush")
+                .call(d3.brushX()
+                    .extent([[0, 0], [width, height]])
+                    .on("end", brushended));
+
+            function brushended() {
+                if (!d3.event.sourceEvent) return; // Only transition after input.
+                if (!d3.event.selection) return; // Ignore empty selections.
+                var date0 = d3.event.selection.map(xScale.invert),
+                    date1 = date0.map(d3.timeDay.round);
+
+                // If empty when rounded, use floor & ceil instead.
+                if (date1[0] >= date1[1]) {
+                    date1[0] = d3.timeDay.floor(date0[0]);
+                    date1[1] = d3.timeDay.offset(date1[0]);
+                }
+                d3.select(this).transition().duration(300).call(d3.event.target.move, date1.map(xScale));
+
+                that.startDay = d3.timeDay.count(that.start_date,date1[0])
+                that.endDay   = d3.timeDay.count(that.start_date,date1[1])
+
+                //Set filters for the map
+                map.setFilter('marker-layer',['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
+                geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+                  map.setFilter(activeLayer,['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
                 })
-
-            svg.call(tip);
-
-            // Prettier tooltip
-            bar.on('mouseover', function(d){
-                tip.show(d);
-                this.style = "fill:steelblue";
-                // d3.select(this).style("cursor", "pointer")
-            })
-
-            bar.on('mouseout', function(d){
-                tip.hide(d);
-                this.style = "fill:lightsteelblue";
-                // d3.select(this).style("cursor", "default")
-            });
-
-
-            // Brushing from http://bl.ocks.org/emeeks/8899a3e8c31d4c5e7cfd
-            // Draw brush
-            brush = d3.svg.brush()
-                .x(xScale)
-                .on("brush", brushmove)
-                .on("brushend", brushend);
-
-            var arc = d3.svg.arc()
-              .outerRadius(height / 20)
-              .startAngle(0)
-              .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
-
-            brushg = svg.append("g")
-              .attr("class", "brush")
-              .call(brush);
-
-            brushg.selectAll(".resize").append("path")
-                .attr("transform", "translate(0," +  height / 2 + ")")
-                .attr("d", arc);
-
-            brushg.selectAll("rect")
-                .attr("height", height);
-
-            // ****************************************
-            // Brush functions
-            // ****************************************
-
-            function brushmove() {
-                yScale.domain(xScaleIdx.range())
-                        .range(xScaleIdx.domain());
-                b = brush.extent();
-
-                var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
-                    localBrushYearEnd = (brush.empty()) ? brushYearEnd : Math.ceil(yScale(b[1]));
-
-                // Snap to rect edge
-                d3.select("g.brush").call((brush.empty()) ? brush.clear() : brush.extent([yScale.invert(localBrushYearStart), yScale.invert(localBrushYearEnd)]));
-
-                // Fade all years in the histogram not within the brush:
-                // for each bar, if index is within selected range, set opacity to 1
-                // else set opacity to .4
-                d3.selectAll("rect.rect").style("opacity", function(d, i) {
-                  return d.idx >= localBrushYearStart && d.idx < localBrushYearEnd || brush.empty() ? "1" : ".4";
-                });
-
+                map.fire('moveend')
             }
-
-            var timeFilters = []
-
-            function brushend() {
-
-              var localBrushYearStart = (brush.empty()) ? brushYearStart : Math.ceil(yScale(b[0])),
-                  localBrushYearEnd   = (brush.empty()) ? brushYearEnd : Math.floor(yScale(b[1]));
-
-              d3.selectAll("rect.bar").style("opacity", function(d, i) {
-                return d.idx >= localBrushYearStart && d.idx <= localBrushYearEnd || brush.empty() ? "1" : ".4";
-              });
-
-              //Add the filter to the map
-              map.setFilter('marker-layer',['all',[">=",'day',localBrushYearStart],["<=",'day',localBrushYearEnd]])
-              map.fire('moveend')
-              console.log('local=', [localBrushYearStart,localBrushYearEnd])
-            }
-
-            function resetBrush() {
-              brush
-                .clear()
-                .event(d3.select(".brush"));
-            }
-
         }); //end d3.csv
+
 
     } //end createTimeline
 
+    var that = this;
+
+    var rtime;
+    var timeout = false;
+    var delta = 200;
+    window.onresize = function(event) {
+       rtime = new Date();
+       if (timeout === false) {
+           timeout = true;
+           setTimeout(resizeend, delta);
+       }
+    };
+
+    function resizeend() {
+       if (new Date() - rtime < delta) {
+           setTimeout(resizeend, delta);
+       } else {
+           timeout = false;
+           console.log('Done resizing');
+           d3.select("#timelinesvg").remove();
+           that.createTimeline();
+       }
+    }
 
 } //end module.exports
 
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = {
   /* https://www.mapbox.com/mapbox-gl-js/example/filter-features-within-map-view/ */
   getUniqueFeatures: function(array, comparatorProperty) {
