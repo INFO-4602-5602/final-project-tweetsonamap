@@ -13,7 +13,7 @@ body {
   left: 75%;
   top: 60px;
   width:240px;
-  height:110px;
+  height:125px;
   background-color:rgba(250,250,250,0.8);
   border-radius: 8px;
 }
@@ -60,7 +60,7 @@ body {
 }
 
 #selected-image{
-  height:40%;
+  max-height:400px;
 }
 
 
