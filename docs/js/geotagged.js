@@ -27,7 +27,11 @@ module.exports = function(config){
     map.addLayer({
       "id": "marker-layer",
       "type": "circle",
-      "source": that.title
+      "source": that.title,
+      "paint":{
+        'circle-color':'green',
+        'circle-radius':6
+      }
     });
   }
 
@@ -50,21 +54,9 @@ module.exports = function(config){
 
     var markerDiv  = document.createElement('div')
         markerDiv.className = 'marker';
-        // markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}${this.extension}` + ')';
         markerDiv.style.backgroundImage = 'url(' + `${this.img_dir}/`+'small/'+`${feature.properties.id}` + '.jpg)';
         markerDiv.style.width  = this.img_width+'px';
         markerDiv.style.height = this.img_height+'px';
-
-        // markerDiv.addEventListener('mouseenter', function() {
-        //     popup.setLngLat(feature.geometry.coordinates)
-        //          .setHTML(that.prettyPopUp(feature.properties))
-        //          .addTo(map)
-        //
-        // });
-        //
-        // markerDiv.addEventListener('mouseleave', function() {
-        //   popup.remove();
-        // });
 
     var marker = new mapboxgl.Marker(markerDiv, {offset: [-50,-50]})
       .setLngLat(feature.geometry.coordinates)
