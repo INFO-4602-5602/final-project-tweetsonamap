@@ -88,8 +88,9 @@ body {
 /* Box containing timeline */
 #timeline-parent {
   position:fixed;
-  left:10px;
-  width:50%;
+  left:300px;
+  right: 25%;
+  transform: translate(-280px);
   height:15%;
   top: 10px;
   z-index:100;
