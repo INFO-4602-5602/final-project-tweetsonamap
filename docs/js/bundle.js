@@ -1,14 +1,29 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = {
- "web_root" : "/data/www/jennings/infovis",
- "img_root" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/map_images",
- "start_date" : "2016-9-25",
- "mapboxAccessToken" : "pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A",
- "markers" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/geotagged-tweets.geojson",
- "polygon_features": "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-features.geojson",
- "polygon_centers" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-centers-no-tweets.geojson",
- "polyon_features_as_points" : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/polygon-tweets-individual-points.geojson",
- "tweets_per_day"  : "http://epic-analytics.cs.colorado.edu:9000/jennings/infovis/matthew_tweets_per_day.csv"
+  "matthew" : {
+    "center"  : [-73.054, 18.429],
+    "zoom"    : 6.5,
+    "img_root" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/matthew/map_images",
+    "start_date" : "2016-9-25",
+    "mapboxAccessToken" : "pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A",
+    "markers" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/matthew/geotagged-tweets.geojson",
+    "polygon_features": "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/matthew/polygon-features.geojson",
+    "polygon_centers" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/matthew/polygon-centers-no-tweets.geojson",
+    "polyon_features_as_points" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/matthew/polygon-tweets-individual-points.geojson",
+    "tweets_per_day"  : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/matthew/matthew_tweets_per_day.csv"
+ },
+ "hajj"  : {
+    "center" : [44.79, 24.50],
+    "zoom" : 3.8,
+    "img_root" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/hajj/map_images",
+    "start_date" : "2016-09-07",
+    "mapboxAccessToken" : "pk.eyJ1IjoiamVubmluZ3NhbmRlcnNvbiIsImEiOiIzMHZndnpvIn0.PS-j7fRK3HGU7IE8rbLT9A",
+    "markers" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/hajj/geotagged-tweets.geojson",
+    "polygon_features": "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/hajj/polygon-features.geojson",
+    "polygon_centers" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/hajj/polygon-centers-no-tweets.geojson",
+    "polyon_features_as_points" : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/hajj/polygon-tweets-individual-points.geojson",
+    "tweets_per_day"  : "http://epic-analytics.cs.colorado.edu:9000/tweetsonamap/hajj/tweets_per_day.csv"
+  }
 }
 
 },{}],2:[function(require,module,exports){
@@ -391,10 +406,20 @@ module.exports = function(config){
 },{"../lib/functions.js":7}],5:[function(require,module,exports){
 'use strict';
 
-var siteConfig         = require('../config.js')
+var util               = require('../lib/functions.js')
+
+var config         = require('../config.js')
+
+var ds = util.qs(window.location.href.split("?")[1])['event']
+
+var event = ds ? ds : 'matthew'
+
+console.log(event)
+
+var siteConfig     = config[event]
+
 console.log("Site Configuration Loaded. Start date: "+siteConfig.start_date)
 
-var util               = require('../lib/functions.js')
 
 var GeoTaggedHandler   = require('./geotagged.js')
 var GeoLocatedHandler  = require('./geolocated.js')
@@ -434,8 +459,8 @@ mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 var map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/light-v9',
-  center: [-73.054, 18.429],
-  zoom: 6.5,
+  center: siteConfig.center || [-73.054, 18.429],
+  zoom: siteConfig.zoom || 6.5,
   minZoom: 2,
   hash:true
 });
@@ -834,7 +859,18 @@ module.exports = {
 
       return uniqueFeatures;
   },
-
+  //http://stackoverflow.com/questions/901115/how-can-i-get-query-string-values-in-javascript?page=2&tab=active#tab-top
+  qs : function(a){
+   if(!a)return {};
+   a=a.split('#')[0].split('&');
+   var b=a.length,c={},d,k,v;
+   while(b--){
+    d=a[b].split('=');
+    k=d[0].replace('[]',''),v=decodeURIComponent(d[1]||'');
+    c[k]?typeof c[k]==='string'?(c[k]=[v,c[k]]):(c[k].unshift(v)):c[k]=v;
+   }
+   return c
+  }
 }
 
 },{}]},{},[5]);
