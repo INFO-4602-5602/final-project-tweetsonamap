@@ -1,9 +1,19 @@
 'use strict';
 
-var siteConfig         = require('../config.js')
+var util               = require('../lib/functions.js')
+
+var config         = require('../config.js')
+
+var ds = util.qs(window.location.href.split("?")[1])['event']
+
+var event = ds ? ds : 'matthew'
+
+console.log(event)
+
+var siteConfig     = config[event]
+
 console.log("Site Configuration Loaded. Start date: "+siteConfig.start_date)
 
-var util               = require('../lib/functions.js')
 
 var GeoTaggedHandler   = require('./geotagged.js')
 var GeoLocatedHandler  = require('./geolocated.js')
@@ -43,8 +53,8 @@ mapboxgl.accessToken = siteConfig.mapboxAccessToken;
 var map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/light-v9',
-  center: [-73.054, 18.429],
-  zoom: 6.5,
+  center: siteConfig.center || [-73.054, 18.429],
+  zoom: siteConfig.zoom || 6.5,
   minZoom: 2,
   hash:true
 });
