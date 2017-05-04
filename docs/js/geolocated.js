@@ -19,7 +19,7 @@ var featureLevels = [
   {'name' : 'm-polygon',   filter: ['all',
                                                   ['>', 'area', 1000],
                                                   ['<=','area',10000]
-                                                ], maxzoom: 9,
+                                                ], maxzoom: 10,
                                                    minzoom: 5  },
 
   {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
@@ -56,13 +56,25 @@ module.exports = function(config){
         'type': "circle",
         'source': that.title,
         'paint':{
-          'circle-opacity':0.15,
+          'circle-opacity':0.05,
           'circle-color': '#448ee4',
           'circle-radius' : {
             'property': 'area',
-            'stops' : [[0,4],[9999999,100]]
+            'stops' : [
+              [{zoom: 0, value:   0},4],
+              [{zoom: 0, value: 9999999},100],
+
+              [{zoom: 5, value:   0},25],
+              [{zoom: 5, value: 9999999},200],
+
+              [{zoom: 10, value:  0},100],
+              [{zoom: 10, value: 9999999},300],
+
+              [{zoom: 15, value:  0},500],
+              [{zoom: 15, value: 9999999},1500]
+            ]
           },
-          'circle-blur': 0.5
+          'circle-blur': 0.2
         },
         'filter': level.filter,
         'maxzoom': level.maxzoom,
