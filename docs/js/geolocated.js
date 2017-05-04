@@ -4,22 +4,22 @@ var popup = new mapboxgl.Popup({})
 
 var featureLevels = [
   {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
-                                                   maxzoom: 4.5,
+                                                   maxzoom: 5,
                                                    minzoom: 2  },
   {'name' : 'xl-polygon',  filter: ['all',
                                                   ['>', 'area', 20000],
                                                   ['<=','area', 40000]
-                                                ], maxzoom: 8.5,
+                                                ], maxzoom: 9,
                                                    minzoom: 4  },
   {'name' : 'l-polygon',   filter: ['all',
                                                   ['>', 'area', 10000],
                                                   ['<=','area', 20000]
-                                                ], maxzoom: 8.5,
+                                                ], maxzoom: 10,
                                                    minzoom: 4  },
   {'name' : 'm-polygon',   filter: ['all',
                                                   ['>', 'area', 1000],
                                                   ['<=','area',10000]
-                                                ], maxzoom: 9.5,
+                                                ], maxzoom: 9,
                                                    minzoom: 5  },
 
   {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
@@ -57,25 +57,18 @@ module.exports = function(config){
         'source': that.title,
         'paint':{
           'circle-opacity':0.15,
-          'circle-color': 'green',
+          'circle-color': '#448ee4',
           'circle-radius' : {
             'property': 'area',
             'stops' : [[0,4],[9999999,100]]
-          }
+          },
+          'circle-blur': 0.5
         },
         'filter': level.filter,
         'maxzoom': level.maxzoom,
         'minzoom': level.minzoom
       })
     })
-
-    var that = this;
-    that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
-    featureLevels.forEach(function(layer){
-      map.on('click',layer.name+"-circle-layer",function(e){
-        that.polygonClick(e, map)
-      })
-    });
   }
 
   this.getVisibleFeatures = function(map){

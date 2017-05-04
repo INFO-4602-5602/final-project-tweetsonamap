@@ -203,6 +203,21 @@ map.once('load', function () {
       }
     },500)
   })
+
+  map.on("mousemove", "marker-layer", function(e) {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on("mouseleave", "marker-layer", function(e) {
+    map.getCanvas().style.cursor = '';
+  });
+
+  map.on("click", "marker-layer", function(e) {
+    map.getCanvas().style.cursor = '';
+    console.log(e.features[0])
+    imageScroller.tweetClicked(e.features[0], map, null)
+    console.log(e.features[0])
+  });
 })
 
 var userFilter = false

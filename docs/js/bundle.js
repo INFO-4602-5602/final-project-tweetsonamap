@@ -33,22 +33,22 @@ var popup = new mapboxgl.Popup({})
 
 var featureLevels = [
   {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
-                                                   maxzoom: 4.5,
+                                                   maxzoom: 5,
                                                    minzoom: 2  },
   {'name' : 'xl-polygon',  filter: ['all',
                                                   ['>', 'area', 20000],
                                                   ['<=','area', 40000]
-                                                ], maxzoom: 8.5,
+                                                ], maxzoom: 9,
                                                    minzoom: 4  },
   {'name' : 'l-polygon',   filter: ['all',
                                                   ['>', 'area', 10000],
                                                   ['<=','area', 20000]
-                                                ], maxzoom: 8.5,
+                                                ], maxzoom: 10,
                                                    minzoom: 4  },
   {'name' : 'm-polygon',   filter: ['all',
                                                   ['>', 'area', 1000],
                                                   ['<=','area',10000]
-                                                ], maxzoom: 9.5,
+                                                ], maxzoom: 9,
                                                    minzoom: 5  },
 
   {'name' : 's-polygon',   filter:  ['<=', 'area', 1000],
@@ -86,25 +86,18 @@ module.exports = function(config){
         'source': that.title,
         'paint':{
           'circle-opacity':0.15,
-          'circle-color': 'green',
+          'circle-color': '#448ee4',
           'circle-radius' : {
             'property': 'area',
             'stops' : [[0,4],[9999999,100]]
-          }
+          },
+          'circle-blur': 0.5
         },
         'filter': level.filter,
         'maxzoom': level.maxzoom,
         'minzoom': level.minzoom
       })
     })
-
-    var that = this;
-    that.polyPopup = new mapboxgl.Popup({closeOnClick:false}).addTo(map);
-    featureLevels.forEach(function(layer){
-      map.on('click',layer.name+"-circle-layer",function(e){
-        that.polygonClick(e, map)
-      })
-    });
   }
 
   this.getVisibleFeatures = function(map){
@@ -168,8 +161,9 @@ module.exports = function(config){
       "type": "circle",
       "source": that.title,
       "paint":{
-        'circle-color':'green',
-        'circle-radius':6
+        'circle-opacity': 0.8,
+        'circle-color':'tomato',
+        'circle-radius':4
       }
     });
   }
@@ -179,7 +173,7 @@ module.exports = function(config){
       var features = map.queryRenderedFeatures({layers: ['marker-layer']})
       if (!features.length) return [0,[]] //If no features exist here, return empty array
 
-      var uniqueFeatures = util.getUniqueGeometries(features); //Only ever take the load limit
+      var uniqueFeatures = util.getUniqueFeatures(features,'id'); //Only ever take the load limit
 
       return [uniqueFeatures.length, uniqueFeatures.slice(0,this.load_lim)]
     }else{
@@ -609,6 +603,21 @@ map.once('load', function () {
       }
     },500)
   })
+
+  map.on("mousemove", "marker-layer", function(e) {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on("mouseleave", "marker-layer", function(e) {
+    map.getCanvas().style.cursor = '';
+  });
+
+  map.on("click", "marker-layer", function(e) {
+    map.getCanvas().style.cursor = '';
+    console.log(e.features[0])
+    imageScroller.tweetClicked(e.features[0], map, null)
+    console.log(e.features[0])
+  });
 })
 
 var userFilter = false
@@ -665,8 +674,6 @@ module.exports = function(config){
         var width  = parent_width - margin.left - margin.right; // Width of our visualization
         var height = parent_height - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
-
-
 
         var parseDate  = d3.timeParse("%Y-%m-%d");
         var parseDate2 = d3.timeParse("%Y-%-m-%d");
@@ -770,8 +777,17 @@ module.exports = function(config){
                     .on("end", brushended));
 
             function brushended() {
+
                 if (!d3.event.sourceEvent) return; // Only transition after input.
-                if (!d3.event.selection) return; // Ignore empty selections.
+                if (!d3.event.selection){
+                  //If there is no selection, then do what?
+                  map.setFilter('marker-layer',null)
+                  geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+                    map.setFilter(activeLayer,null)
+                  })
+                  map.fire('moveend')
+                  return
+                }
                 var date0 = d3.event.selection.map(xScale.invert),
                     date1 = date0.map(d3.timeDay.round);
 
@@ -786,7 +802,11 @@ module.exports = function(config){
                 that.endDay   = d3.timeDay.count(that.start_date,date1[1])
 
                 //Set filters for the map
-                map.setFilter('marker-layer',['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
+                try{
+                  map.setFilter('marker-layer',['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
+                }catch(e){
+                  console.log(map.loaded())
+                }
                 geoLocatedHandler.queryLayers.forEach(function(activeLayer){
                   map.setFilter(activeLayer,['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
                 })

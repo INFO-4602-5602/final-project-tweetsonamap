@@ -7,7 +7,7 @@ body {
 
 #controlbox{
   display:block;
-  z-index:1000;
+  z-index:1;
   position: fixed;
   transform: translateX(-100%) translateX(-10px);
   left: 75%;
@@ -55,7 +55,7 @@ body {
 }
 
 #selected-image{
-  max-height: 30vh;
+  max-height: 25vh;
 }
 
 #image-popup{
@@ -99,4 +99,25 @@ body {
   z-index:100;
   background-color:rgba(250,250,250,0.9);
   border-radius:8px
+}
+
+
+
+/*
+  Checkbox overrides
+*/
+input:checked+.geoTagged-Switch{
+  background-color:tomato;
+}
+
+div.geoTagged-Switch {
+  color:tomato;
+}
+
+input:checked+.geoLocated-Switch{
+  background-color:'#448ee4';
+}
+
+div.geoLocated-Switch {
+  color:'#448ee4';
 }

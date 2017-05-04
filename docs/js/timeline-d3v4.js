@@ -19,8 +19,6 @@ module.exports = function(config){
         var height = parent_height - margin.top - margin.bottom; // Height of our visualization
         // var transDur = 100; // Transition time in ms
 
-
-
         var parseDate  = d3.timeParse("%Y-%m-%d");
         var parseDate2 = d3.timeParse("%Y-%-m-%d");
         var formatDate = d3.timeFormat("%a %b %d, %Y");
@@ -123,8 +121,17 @@ module.exports = function(config){
                     .on("end", brushended));
 
             function brushended() {
+
                 if (!d3.event.sourceEvent) return; // Only transition after input.
-                if (!d3.event.selection) return; // Ignore empty selections.
+                if (!d3.event.selection){
+                  //If there is no selection, then do what?
+                  map.setFilter('marker-layer',null)
+                  geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+                    map.setFilter(activeLayer,null)
+                  })
+                  map.fire('moveend')
+                  return
+                }
                 var date0 = d3.event.selection.map(xScale.invert),
                     date1 = date0.map(d3.timeDay.round);
 
@@ -139,7 +146,11 @@ module.exports = function(config){
                 that.endDay   = d3.timeDay.count(that.start_date,date1[1])
 
                 //Set filters for the map
-                map.setFilter('marker-layer',['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
+                try{
+                  map.setFilter('marker-layer',['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
+                }catch(e){
+                  console.log(map.loaded())
+                }
                 geoLocatedHandler.queryLayers.forEach(function(activeLayer){
                   map.setFilter(activeLayer,['all',[">=",'day',that.startDay],["<",'day',that.endDay]])
                 })

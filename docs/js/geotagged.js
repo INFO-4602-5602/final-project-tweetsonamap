@@ -29,8 +29,9 @@ module.exports = function(config){
       "type": "circle",
       "source": that.title,
       "paint":{
-        'circle-color':'green',
-        'circle-radius':6
+        'circle-opacity': 0.8,
+        'circle-color':'tomato',
+        'circle-radius':4
       }
     });
   }
@@ -40,7 +41,7 @@ module.exports = function(config){
       var features = map.queryRenderedFeatures({layers: ['marker-layer']})
       if (!features.length) return [0,[]] //If no features exist here, return empty array
 
-      var uniqueFeatures = util.getUniqueGeometries(features); //Only ever take the load limit
+      var uniqueFeatures = util.getUniqueFeatures(features,'id'); //Only ever take the load limit
 
       return [uniqueFeatures.length, uniqueFeatures.slice(0,this.load_lim)]
     }else{

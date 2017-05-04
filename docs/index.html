@@ -31,19 +31,19 @@
   <div id="controlbox" class="round p6">
     <label class='switch-container mb6 txt-s'>
       <input type='checkbox' id='render-markers'/>
-      <div class='switch mr6'></div>
+      <div class='geoTagged-Switch switch mr6'></div>
       Show geotagged images on map
     </label>
 
     <label class='switch-container mb6 txt-s'>
       <input type='checkbox' checked='checked' id='show-geotagged-tweets'/>
-      <div class='switch mr6'></div>
+      <div class='geoTagged-Switch switch mr6'></div>
       Show geotagged points
     </label>
 
     <label class='switch-container mb6 txt-s'>
       <input type='checkbox' checked='checked' id='show-geolocated-tweets'/>
-      <div class='switch mr6'></div>
+      <div class='geoLocated-Switch switch mr6'></div>
       Show any geo-located tweet
     </label>
 
@@ -59,7 +59,11 @@
     <div class="col--3 flex-parent--column pl6">
 
       <div id="image-popup-container" class="flex-child">
-        <div id="image-popup"></div>
+        <div id="image-popup">
+          <h3 class="prose align-l">Navigate the map to a region of interest by zooming (scrolling) and panning (click and drag)</h3>
+
+          <h3 class="prose mt12 align-l">Images from tweets posted in that area will show up below. Click on an image to see more details</h3>
+        </div>
       </div>
 
       <ul id="images" class="flex-child"></ul>
