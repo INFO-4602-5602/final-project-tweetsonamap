@@ -33,7 +33,7 @@ var popup = new mapboxgl.Popup({})
 
 var featureLevels = [
   {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
-                                                   maxzoom: 5,
+                                                   maxzoom: 6,
                                                    minzoom: 2  },
   {'name' : 'xl-polygon',  filter: ['all',
                                                   ['>', 'area', 20000],
@@ -630,6 +630,40 @@ map.once('load', function () {
     imageScroller.tweetClicked(e.features[0], map, null)
     console.log(e.features[0])
   });
+
+
+  geoLocatedHandler.queryLayers.forEach(function(activeLayer){
+    map.on("mousemove", activeLayer, function(e) {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on("mouseleave", activeLayer, function(e) {
+      map.getCanvas().style.cursor = '';
+    });
+
+    map.on("click",activeLayer,function(e){
+      var feat = e.features[0]
+
+      console.log("area", feat.properties.area)
+      var zoom = 10
+      if(feat.properties.area > 40000){
+        zoom = 5.5
+      }else if (feat.properties.area > 20000){
+        zoom = 8
+      }else if (feat.properties.area > 10000){
+        zoom = 7
+      }else if (feat.properties.area > 1000){
+        zoom = 9
+      }
+      console.log(zoom)
+      map.flyTo({
+        center: feat.geometry.coordinates,
+        zoom: zoom
+      })
+    });
+  });
+
+
 })
 
 var userFilter = false

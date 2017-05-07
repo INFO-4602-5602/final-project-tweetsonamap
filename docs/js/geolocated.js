@@ -4,7 +4,7 @@ var popup = new mapboxgl.Popup({})
 
 var featureLevels = [
   {'name' : 'xxl-polygon', filter: ['>', 'area', 40000],
-                                                   maxzoom: 5,
+                                                   maxzoom: 6,
                                                    minzoom: 2  },
   {'name' : 'xl-polygon',  filter: ['all',
                                                   ['>', 'area', 20000],
